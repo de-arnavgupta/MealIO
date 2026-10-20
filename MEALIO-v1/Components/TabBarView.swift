@@ -30,14 +30,15 @@ public struct CustomTabBar: View {
             ForEach(MainTab.allCases, id: \.self) { tab in
                 let isSelected = selectedTab == tab
                 Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    HapticFeedback.selection()
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
                         selectedTab = tab
                     }
                 }) {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 3) {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: tab.iconName)
-                                .font(.system(size: 20, weight: isSelected ? .medium : .regular))
+                                .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
                                 .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
                                 .frame(height: 24)
                             
@@ -45,35 +46,37 @@ public struct CustomTabBar: View {
                                 Text("\(groceryCount)")
                                     .font(.system(size: 10, weight: .bold))
                                     .foregroundColor(.white)
-                                    .padding(.horizontal, 4)
-                                    .padding(.vertical, 1)
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 1.5)
                                     .background(MealioColors.terracotta)
                                     .clipShape(Capsule())
-                                    .offset(x: 10, y: -4)
+                                    .offset(x: 12, y: -4)
                             }
                         }
                         
                         Text(tab.rawValue)
-                            .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
+                            .font(.system(size: 11, weight: isSelected ? .bold : .medium))
                             .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
                     }
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background {
+                        if isSelected {
+                            Capsule()
+                                .fill(MealioColors.terracottaLight.opacity(0.8))
+                                .padding(.horizontal, 4)
+                                .transition(.opacity)
+                        }
+                    }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.top, 10)
-        .padding(.bottom, 24)
-        .background(
-            MealioColors.background
-                .overlay(
-                    Rectangle()
-                        .fill(MealioColors.divider.opacity(0.6))
-                        .frame(height: 1),
-                    alignment: .top
-                )
-                .ignoresSafeArea(edges: .bottom)
-        )
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .liquidGlass(cornerRadius: 32)
+        .padding(.horizontal, 18)
+        .padding(.bottom, 12)
     }
 }

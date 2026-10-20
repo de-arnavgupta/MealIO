@@ -153,23 +153,24 @@ public struct HomeView: View {
         }
     }
     
-    // MARK: - Search Bar
+    // MARK: - Search Bar (Liquid Glass)
     private var searchBar: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 15))
-                .foregroundColor(MealioColors.textTertiary)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(MealioColors.textSecondary)
             
             TextField("A dish, an ingredient, a craving...", text: $store.searchText)
-                .font(.system(size: 14))
+                .font(.system(size: 15))
                 .foregroundColor(MealioColors.textPrimary)
             
             if !store.searchText.isEmpty {
                 Button(action: {
+                    HapticFeedback.light()
                     store.searchText = ""
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 14))
+                        .font(.system(size: 15))
                         .foregroundColor(MealioColors.textTertiary)
                 }
                 .buttonStyle(.plain)
@@ -178,57 +179,57 @@ public struct HomeView: View {
             Spacer()
             
             Button(action: {
+                HapticFeedback.light()
                 vm.showingFilterSheet = true
             }) {
                 ZStack {
+                    Circle()
+                        .fill(
+                            (store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil) ?
+                            MealioColors.terracotta : Color.white.opacity(0.4)
+                        )
+                        .frame(width: 32, height: 32)
+                    
                     Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 15))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(
                             (store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil) ?
-                                MealioColors.terracottaDark : MealioColors.terracotta
+                            .white : MealioColors.textPrimary
                         )
                     
                     if store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil {
                         Circle()
-                            .fill(MealioColors.terracotta)
+                            .fill(Color.white)
                             .frame(width: 6, height: 6)
-                            .offset(x: 8, y: -8)
+                            .offset(x: 9, y: -9)
                     }
                 }
-                .frame(width: 32, height: 32)
-                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(MealioColors.divider, lineWidth: 1)
-                .background(RoundedRectangle(cornerRadius: 24).fill(MealioColors.cardLight))
-        )
+        .padding(.vertical, 12)
+        .liquidGlass(cornerRadius: 24)
     }
     
-    // MARK: - Category Filter Pills
+    // MARK: - Category Filter Pills (Liquid Glass)
     private var categoryPills: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 ForEach(RecipeCategory.allCases) { category in
                     let isSelected = store.selectedCategory == category
                     Button(action: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        HapticFeedback.selection()
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.76)) {
                             store.selectedCategory = category
                         }
                     }) {
                         Text(category.rawValue)
-                            .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                            .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                             .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
                             .padding(.horizontal, 18)
                             .padding(.vertical, 10)
-                            .background(
-                                Capsule()
-                                    .fill(isSelected ? MealioColors.textPrimary : MealioColors.pillBackground)
-                            )
+                            .liquidGlassCapsule(isSelected: isSelected)
                     }
                     .buttonStyle(.plain)
                 }
@@ -248,18 +249,21 @@ public struct HomeView: View {
                 Spacer()
                 
                 Button(action: {
+                    HapticFeedback.light()
                     vm.activeCollectionTitle = "The Evening Edit"
                     vm.activeCollectionSubtitle = "Curated luxury dinners for tonight's table."
                     vm.activeCollectionRecipes = store.eveningEditRecipes
                 }) {
-                    HStack(spacing: 2) {
+                    HStack(spacing: 3) {
                         Text("Explore")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: 12, weight: .semibold))
                         Image(systemName: "arrow.up.right")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.system(size: 10, weight: .bold))
                     }
                     .foregroundColor(MealioColors.terracotta)
-                    .contentShape(Rectangle())
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .liquidGlassCapsule()
                 }
                 .buttonStyle(.plain)
             }
@@ -405,18 +409,21 @@ public struct HomeView: View {
                 Spacer()
                 
                 Button(action: {
+                    HapticFeedback.light()
                     vm.activeCollectionTitle = "Last visited"
                     vm.activeCollectionSubtitle = "Recipes you recently explored."
                     vm.activeCollectionRecipes = store.lastVisitedRecipes
                 }) {
-                    HStack(spacing: 2) {
+                    HStack(spacing: 3) {
                         Text("View all")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: 12, weight: .semibold))
                         Image(systemName: "arrow.up.right")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.system(size: 10, weight: .bold))
                     }
                     .foregroundColor(MealioColors.terracotta)
-                    .contentShape(Rectangle())
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .liquidGlassCapsule()
                 }
                 .buttonStyle(.plain)
             }
@@ -460,18 +467,21 @@ public struct HomeView: View {
                 Spacer()
                 
                 Button(action: {
+                    HapticFeedback.light()
                     vm.activeCollectionTitle = "Short on time. Not taste."
                     vm.activeCollectionSubtitle = "Fast weeknight dinners ready in 20 minutes or less."
                     vm.activeCollectionRecipes = store.quickRecipes
                 }) {
-                    HStack(spacing: 2) {
+                    HStack(spacing: 3) {
                         Text("More")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: 12, weight: .semibold))
                         Image(systemName: "arrow.up.right")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.system(size: 10, weight: .bold))
                     }
                     .foregroundColor(MealioColors.terracotta)
-                    .contentShape(Rectangle())
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .liquidGlassCapsule()
                 }
                 .buttonStyle(.plain)
             }
@@ -583,32 +593,30 @@ public struct HomeView: View {
                 Spacer()
             }
             
-            // Cuisine Quick Sub-Tabs
+            // Cuisine Quick Sub-Tabs (Liquid Glass)
             let tabs = ["All", "Italian", "French", "Japanese", "Mexican", "Indian", "Mediterranean", "Thai", "Spanish", "American", "Middle Eastern"]
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(tabs, id: \.self) { tab in
                         let isSelected = vm.selectedExploreCuisineTab == tab
                         Button(action: {
-                            withAnimation(.easeInOut(duration: 0.15)) {
+                            HapticFeedback.light()
+                            withAnimation(.spring(response: 0.28, dampingFraction: 0.76)) {
                                 vm.selectedExploreCuisineTab = tab
                                 vm.visibleRecipesCount = 16
                             }
                         }) {
                             Text(tab)
-                                .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
+                                .font(.system(size: 12, weight: isSelected ? .bold : .medium))
                                 .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
                                 .padding(.horizontal, 14)
-                                .padding(.vertical, 6)
-                                .background(
-                                    Capsule()
-                                        .fill(isSelected ? MealioColors.terracotta : MealioColors.pillBackground)
-                                )
-                                .contentShape(Rectangle())
+                                .padding(.vertical, 7)
+                                .liquidGlassCapsule(tint: isSelected ? MealioColors.terracotta : nil, isSelected: isSelected)
                         }
                         .buttonStyle(.plain)
                     }
                 }
+                .padding(.horizontal, 20)
             }
             
             let sourceList: [Recipe] = {
