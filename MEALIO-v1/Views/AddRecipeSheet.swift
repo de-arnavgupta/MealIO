@@ -6,10 +6,9 @@ public class AddRecipeViewModel: ObservableObject {
     @Published public var subtitle: String = ""
     @Published public var selectedCuisine: String = "Italian"
     @Published public var selectedDietary: String = "Non-Veg"
-    @Published public var isHalal: Bool = true
     @Published public var prepMinutes: Int = 15
     @Published public var cookMinutes: Int = 25
-    @Published public var effort: String = "MEDIUM"
+    @Published public var effort: String = "Medium"
     @Published public var servings: Int = 2
     @Published public var selectedImageIndex: Int = 0
     @Published public var chefSecret: String = ""
@@ -17,7 +16,7 @@ public class AddRecipeViewModel: ObservableObject {
     // Ingredients
     @Published public var ingredients: [AddIngredientItem] = [
         AddIngredientItem(name: "Extra virgin olive oil", quantity: "2 tbsp"),
-        AddIngredientItem(name: "Flaky sea salt & pepper", quantity: "To taste"),
+        AddIngredientItem(name: "Flaky sea salt & black pepper", quantity: "To taste"),
         AddIngredientItem(name: "Fresh garlic cloves", quantity: "3 cloves, minced")
     ]
     
@@ -44,7 +43,7 @@ public class AddRecipeViewModel: ObservableObject {
     ]
     
     public let dietaryOptions = ["Non-Veg", "Vegetarian", "Vegan", "Halal"]
-    public let effortOptions = ["EASY", "MEDIUM", "HARD"]
+    public let effortOptions = ["Easy", "Medium", "Hard"]
     
     public var isValid: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -109,7 +108,7 @@ public class AddRecipeViewModel: ObservableObject {
             collectionTag: "Original Recipes",
             totalTime: totalTimeDisplay,
             totalTimeMinutes: totalTimeMinutes,
-            effort: effort,
+            effort: effort.uppercased(),
             rating: 5.0,
             homeCooksCount: 1,
             description: subtitle.isEmpty ? "A custom handcrafted recipe created in your kitchen." : subtitle,
@@ -188,23 +187,25 @@ public struct AddRecipeSheet: View {
                         HapticFeedback.light()
                         dismiss()
                     }
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(MealioColors.textSecondary)
                 }
             }
         }
+        .preferredColorScheme(.light)
     }
     
-    // MARK: - Cover Selector
+    // MARK: - Cover Selector (Fast, Zero-Lag)
     private var coverSelector: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("COVER PLATE")
                 .font(MealioFont.eyebrow(size: 11))
                 .tracking(1.0)
-                .foregroundColor(MealioColors.textTertiary)
+                .foregroundColor(MealioColors.textSecondary)
                 .padding(.horizontal, 20)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                LazyHStack(spacing: 12) {
                     ForEach(Array(vm.availableImages.enumerated()), id: \.offset) { index, item in
                         let isSelected = vm.selectedImageIndex == index
                         Button(action: {
@@ -212,23 +213,26 @@ public struct AddRecipeSheet: View {
                             vm.selectedImageIndex = index
                         }) {
                             VStack(spacing: 6) {
-                                MealioImageView(item.name)
-                                    .frame(width: 84, height: 84)
-                                    .cornerRadius(18)
+                                Image(item.name)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 82, height: 82)
+                                    .clipped()
+                                    .cornerRadius(16)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 18)
-                                            .stroke(isSelected ? MealioColors.terracotta : Color.clear, lineWidth: 2.5)
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(isSelected ? MealioColors.terracotta : Color(hex: 0xDCD5CB), lineWidth: isSelected ? 2.5 : 1.0)
                                     )
-                                    .shadow(color: isSelected ? MealioColors.terracotta.opacity(0.30) : Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
+                                    .shadow(color: isSelected ? MealioColors.terracotta.opacity(0.35) : Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
                                 
                                 Text(item.label)
                                     .font(.system(size: 11, weight: isSelected ? .bold : .medium))
-                                    .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
+                                    .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textPrimary)
                                     .lineLimit(1)
                             }
-                            .frame(width: 90)
+                            .frame(width: 86)
                         }
-                        .buttonStyle(LiquidGlassPressStyle())
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -236,54 +240,70 @@ public struct AddRecipeSheet: View {
         }
     }
     
-    // MARK: - Recipe Details Section
+    // MARK: - Recipe Details Section (High Contrast, Crisp Borders)
     private var detailsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("RECIPE DETAILS")
                 .font(MealioFont.eyebrow(size: 11))
                 .tracking(1.0)
-                .foregroundColor(MealioColors.textTertiary)
+                .foregroundColor(MealioColors.textSecondary)
             
-            VStack(spacing: 12) {
-                TextField("Recipe title (e.g., Truffle Tagliolini)", text: $vm.title)
-                    .font(MealioFont.editorialTitle(size: 18))
-                    .foregroundColor(MealioColors.textPrimary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
-                    .background(MealioColors.cardLight)
-                    .cornerRadius(16)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(MealioColors.divider, lineWidth: 0.8)
-                    )
+            VStack(spacing: 10) {
+                // Title Field
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("TITLE")
+                        .font(MealioFont.eyebrow(size: 9))
+                        .foregroundColor(MealioColors.textTertiary)
+                    
+                    TextField("", text: $vm.title, prompt: Text("e.g., Truffle Tagliolini").foregroundColor(MealioColors.textTertiary))
+                        .font(MealioFont.editorialTitle(size: 18))
+                        .foregroundColor(MealioColors.textPrimary)
+                        .tint(MealioColors.terracotta)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(hex: 0xDCD5CB), lineWidth: 1.2)
+                )
                 
-                TextField("One-liner description / tagline", text: $vm.subtitle)
-                    .font(.system(size: 14))
-                    .foregroundColor(MealioColors.textPrimary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(MealioColors.cardLight)
-                    .cornerRadius(16)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(MealioColors.divider, lineWidth: 0.8)
-                    )
+                // Description Field
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("TAGLINE / SUBTITLE")
+                        .font(MealioFont.eyebrow(size: 9))
+                        .foregroundColor(MealioColors.textTertiary)
+                    
+                    TextField("", text: $vm.subtitle, prompt: Text("A short, mouthwatering one-liner").foregroundColor(MealioColors.textTertiary))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(MealioColors.textPrimary)
+                        .tint(MealioColors.terracotta)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(hex: 0xDCD5CB), lineWidth: 1.2)
+                )
             }
         }
         .padding(.horizontal, 20)
     }
     
-    // MARK: - Cuisine & Dietary Section
+    // MARK: - Cuisine & Dietary Section (High Contrast Chips)
     private var cuisineAndDietarySection: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("CUISINE & DIETARY")
                 .font(MealioFont.eyebrow(size: 11))
                 .tracking(1.0)
-                .foregroundColor(MealioColors.textTertiary)
+                .foregroundColor(MealioColors.textSecondary)
             
             // Cuisines Row
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                LazyHStack(spacing: 8) {
                     ForEach(vm.cuisines, id: \.self) { cuisine in
                         let isSelected = vm.selectedCuisine == cuisine
                         Button(action: {
@@ -291,21 +311,27 @@ public struct AddRecipeSheet: View {
                             vm.selectedCuisine = cuisine
                         }) {
                             Text(cuisine)
-                                .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                                .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                                 .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
                                 .lineLimit(1)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
-                                .liquidGlassCapsule(tint: isSelected ? MealioColors.terracotta : nil, isSelected: isSelected)
+                                .background(isSelected ? MealioColors.terracotta : Color.white)
+                                .cornerRadius(20)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(isSelected ? MealioColors.terracotta : Color(hex: 0xDCD5CB), lineWidth: 1.2)
+                                )
                         }
-                        .buttonStyle(LiquidGlassPressStyle())
+                        .buttonStyle(.plain)
                     }
                 }
+                .padding(.horizontal, 20)
             }
             
             // Dietary Row
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                LazyHStack(spacing: 8) {
                     ForEach(vm.dietaryOptions, id: \.self) { diet in
                         let isSelected = vm.selectedDietary == diet
                         Button(action: {
@@ -313,114 +339,207 @@ public struct AddRecipeSheet: View {
                             vm.selectedDietary = diet
                         }) {
                             Text(diet)
-                                .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                                .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                                 .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
                                 .lineLimit(1)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
-                                .liquidGlassCapsule(tint: isSelected ? MealioColors.terracotta : nil, isSelected: isSelected)
-                        }
-                        .buttonStyle(LiquidGlassPressStyle())
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, 20)
-    }
-    
-    // MARK: - Timing & Portions Section
-    private var timingAndPortionsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("TIMING & PORTIONS")
-                .font(MealioFont.eyebrow(size: 11))
-                .tracking(1.0)
-                .foregroundColor(MealioColors.textTertiary)
-            
-            HStack(spacing: 12) {
-                // Prep Time
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("PREP")
-                        .font(MealioFont.eyebrow(size: 9))
-                        .foregroundColor(MealioColors.textSecondary)
-                    Stepper("\(vm.prepMinutes) min", value: $vm.prepMinutes, in: 5...120, step: 5)
-                        .font(.system(size: 13, weight: .semibold))
-                }
-                .padding(12)
-                .frame(maxWidth: .infinity)
-                .background(MealioColors.cardLight)
-                .cornerRadius(16)
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(MealioColors.divider, lineWidth: 0.8))
-                
-                // Cook Time
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("COOK")
-                        .font(MealioFont.eyebrow(size: 9))
-                        .foregroundColor(MealioColors.textSecondary)
-                    Stepper("\(vm.cookMinutes) min", value: $vm.cookMinutes, in: 5...180, step: 5)
-                        .font(.system(size: 13, weight: .semibold))
-                }
-                .padding(12)
-                .frame(maxWidth: .infinity)
-                .background(MealioColors.cardLight)
-                .cornerRadius(16)
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(MealioColors.divider, lineWidth: 0.8))
-            }
-            
-            HStack(spacing: 12) {
-                // Effort
-                HStack {
-                    Text("EFFORT")
-                        .font(MealioFont.eyebrow(size: 9))
-                        .foregroundColor(MealioColors.textSecondary)
-                    Spacer()
-                    ForEach(vm.effortOptions, id: \.self) { eff in
-                        let isSel = vm.effort == eff
-                        Button(action: {
-                            HapticFeedback.light()
-                            vm.effort = eff
-                        }) {
-                            Text(String(eff.prefix(1)))
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(isSel ? .white : MealioColors.textPrimary)
-                                .frame(width: 28, height: 28)
-                                .background(isSel ? MealioColors.terracotta : MealioColors.cardSand)
-                                .clipShape(Circle())
+                                .background(isSelected ? MealioColors.terracotta : Color.white)
+                                .cornerRadius(20)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(isSelected ? MealioColors.terracotta : Color(hex: 0xDCD5CB), lineWidth: 1.2)
+                                )
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(12)
-                .frame(maxWidth: .infinity)
-                .background(MealioColors.cardLight)
-                .cornerRadius(16)
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(MealioColors.divider, lineWidth: 0.8))
-                
-                // Servings
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("SERVINGS")
-                        .font(MealioFont.eyebrow(size: 9))
-                        .foregroundColor(MealioColors.textSecondary)
-                    Stepper("\(vm.servings) people", value: $vm.servings, in: 1...12)
-                        .font(.system(size: 13, weight: .semibold))
+                .padding(.horizontal, 20)
+            }
+        }
+    }
+    
+    // MARK: - Timing & Portions Section (Custom Steppers & Segmented Effort)
+    private var timingAndPortionsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("TIMING & PORTIONS")
+                .font(MealioFont.eyebrow(size: 11))
+                .tracking(1.0)
+                .foregroundColor(MealioColors.textSecondary)
+            
+            HStack(spacing: 12) {
+                // Prep Time
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("PREP TIME")
+                            .font(MealioFont.eyebrow(size: 9))
+                            .foregroundColor(MealioColors.textTertiary)
+                        Text("\(vm.prepMinutes) min")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(MealioColors.textPrimary)
+                    }
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Button(action: {
+                            HapticFeedback.light()
+                            vm.prepMinutes = max(5, vm.prepMinutes - 5)
+                        }) {
+                            Image(systemName: "minus")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(MealioColors.textPrimary)
+                                .frame(width: 28, height: 28)
+                                .background(MealioColors.cardSand)
+                                .clipShape(Circle())
+                        }
+                        Button(action: {
+                            HapticFeedback.light()
+                            vm.prepMinutes = min(180, vm.prepMinutes + 5)
+                        }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 28, height: 28)
+                                .background(MealioColors.terracotta)
+                                .clipShape(Circle())
+                        }
+                    }
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity)
-                .background(MealioColors.cardLight)
-                .cornerRadius(16)
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(MealioColors.divider, lineWidth: 0.8))
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: 0xDCD5CB), lineWidth: 1.2))
+                
+                // Cook Time
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("COOK TIME")
+                            .font(MealioFont.eyebrow(size: 9))
+                            .foregroundColor(MealioColors.textTertiary)
+                        Text("\(vm.cookMinutes) min")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(MealioColors.textPrimary)
+                    }
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Button(action: {
+                            HapticFeedback.light()
+                            vm.cookMinutes = max(5, vm.cookMinutes - 5)
+                        }) {
+                            Image(systemName: "minus")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(MealioColors.textPrimary)
+                                .frame(width: 28, height: 28)
+                                .background(MealioColors.cardSand)
+                                .clipShape(Circle())
+                        }
+                        Button(action: {
+                            HapticFeedback.light()
+                            vm.cookMinutes = min(240, vm.cookMinutes + 5)
+                        }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 28, height: 28)
+                                .background(MealioColors.terracotta)
+                                .clipShape(Circle())
+                        }
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: 0xDCD5CB), lineWidth: 1.2))
+            }
+            
+            // Effort & Servings Row
+            HStack(spacing: 12) {
+                // Effort Level (3 Segmented Buttons)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("EFFORT")
+                        .font(MealioFont.eyebrow(size: 9))
+                        .foregroundColor(MealioColors.textTertiary)
+                    
+                    HStack(spacing: 6) {
+                        ForEach(vm.effortOptions, id: \.self) { eff in
+                            let isSel = vm.effort == eff
+                            Button(action: {
+                                HapticFeedback.light()
+                                vm.effort = eff
+                            }) {
+                                Text(eff)
+                                    .font(.system(size: 11, weight: isSel ? .bold : .medium))
+                                    .foregroundColor(isSel ? .white : MealioColors.textPrimary)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 6)
+                                    .background(isSel ? MealioColors.terracotta : MealioColors.cardSand.opacity(0.7))
+                                    .cornerRadius(8)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: 0xDCD5CB), lineWidth: 1.2))
+                
+                // Servings
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("SERVINGS")
+                            .font(MealioFont.eyebrow(size: 9))
+                            .foregroundColor(MealioColors.textTertiary)
+                        Text("\(vm.servings) \(vm.servings == 1 ? "cook" : "cooks")")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(MealioColors.textPrimary)
+                    }
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Button(action: {
+                            HapticFeedback.light()
+                            vm.servings = max(1, vm.servings - 1)
+                        }) {
+                            Image(systemName: "minus")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(MealioColors.textPrimary)
+                                .frame(width: 28, height: 28)
+                                .background(MealioColors.cardSand)
+                                .clipShape(Circle())
+                        }
+                        Button(action: {
+                            HapticFeedback.light()
+                            vm.servings = min(12, vm.servings + 1)
+                        }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 28, height: 28)
+                                .background(MealioColors.terracotta)
+                                .clipShape(Circle())
+                        }
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: 0xDCD5CB), lineWidth: 1.2))
             }
         }
         .padding(.horizontal, 20)
     }
     
-    // MARK: - Ingredients Section
+    // MARK: - Ingredients Section (Clear Contrast & Placeholders)
     private var ingredientsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("INGREDIENTS")
                     .font(MealioFont.eyebrow(size: 11))
                     .tracking(1.0)
-                    .foregroundColor(MealioColors.textTertiary)
+                    .foregroundColor(MealioColors.textSecondary)
                 
                 Spacer()
                 
@@ -430,9 +549,9 @@ public struct AddRecipeSheet: View {
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "plus.circle.fill")
-                        Text("Add")
+                        Text("Add item")
                     }
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundColor(MealioColors.terracotta)
                 }
             }
@@ -440,28 +559,37 @@ public struct AddRecipeSheet: View {
             VStack(spacing: 8) {
                 ForEach(Array(vm.ingredients.indices), id: \.self) { idx in
                     HStack(spacing: 8) {
-                        TextField("Ingredient (e.g. Fresh Basil)", text: $vm.ingredients[idx].name)
-                            .font(.system(size: 14))
+                        TextField("", text: $vm.ingredients[idx].name, prompt: Text("e.g. Fresh Basil").foregroundColor(MealioColors.textTertiary))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(MealioColors.textPrimary)
+                            .tint(MealioColors.terracotta)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 10)
-                            .background(MealioColors.cardLight)
+                            .background(Color.white)
                             .cornerRadius(12)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: 0xDCD5CB), lineWidth: 1.0))
                         
-                        TextField("Amount", text: $vm.ingredients[idx].quantity)
-                            .font(.system(size: 14))
+                        TextField("", text: $vm.ingredients[idx].quantity, prompt: Text("Amount").foregroundColor(MealioColors.textTertiary))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(MealioColors.textPrimary)
+                            .tint(MealioColors.terracotta)
                             .frame(width: 90)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 10)
-                            .background(MealioColors.cardLight)
+                            .background(Color.white)
                             .cornerRadius(12)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: 0xDCD5CB), lineWidth: 1.0))
                         
                         Button(action: {
                             HapticFeedback.light()
                             vm.removeIngredient(at: idx)
                         }) {
-                            Image(systemName: "minus.circle")
-                                .font(.system(size: 18))
+                            Image(systemName: "trash")
+                                .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(MealioColors.textTertiary)
+                                .frame(width: 32, height: 32)
+                                .background(MealioColors.cardSand.opacity(0.6))
+                                .clipShape(Circle())
                         }
                     }
                 }
@@ -470,14 +598,14 @@ public struct AddRecipeSheet: View {
         .padding(.horizontal, 20)
     }
     
-    // MARK: - Steps Section
+    // MARK: - Steps Section (Clear Contrast & Numbering)
     private var stepsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("COOKING STEPS")
                     .font(MealioFont.eyebrow(size: 11))
                     .tracking(1.0)
-                    .foregroundColor(MealioColors.textTertiary)
+                    .foregroundColor(MealioColors.textSecondary)
                 
                 Spacer()
                 
@@ -487,9 +615,9 @@ public struct AddRecipeSheet: View {
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "plus.circle.fill")
-                        Text("Add Step")
+                        Text("Add step")
                     }
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundColor(MealioColors.terracotta)
                 }
             }
@@ -499,28 +627,34 @@ public struct AddRecipeSheet: View {
                     HStack(alignment: .top, spacing: 10) {
                         Text("\(idx + 1)")
                             .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(MealioColors.terracotta)
+                            .foregroundColor(.white)
                             .frame(width: 24, height: 24)
-                            .background(MealioColors.terracottaLight)
+                            .background(MealioColors.terracotta)
                             .clipShape(Circle())
-                            .padding(.top, 4)
+                            .padding(.top, 8)
                         
-                        TextField("Step instructions...", text: $vm.steps[idx].instruction, axis: .vertical)
-                            .font(.system(size: 14))
+                        TextField("", text: $vm.steps[idx].instruction, prompt: Text("Describe this step...").foregroundColor(MealioColors.textTertiary), axis: .vertical)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(MealioColors.textPrimary)
+                            .tint(MealioColors.terracotta)
                             .lineLimit(2...4)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 10)
-                            .background(MealioColors.cardLight)
+                            .background(Color.white)
                             .cornerRadius(12)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(hex: 0xDCD5CB), lineWidth: 1.0))
                         
                         Button(action: {
                             HapticFeedback.light()
                             vm.removeStep(at: idx)
                         }) {
-                            Image(systemName: "minus.circle")
-                                .font(.system(size: 18))
+                            Image(systemName: "trash")
+                                .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(MealioColors.textTertiary)
-                                .padding(.top, 8)
+                                .frame(width: 32, height: 32)
+                                .background(MealioColors.cardSand.opacity(0.6))
+                                .clipShape(Circle())
+                                .padding(.top, 6)
                         }
                     }
                 }
@@ -531,20 +665,22 @@ public struct AddRecipeSheet: View {
     
     // MARK: - Chef Secret Section
     private var chefSecretSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("CHEF'S SECRET TIP (OPTIONAL)")
                 .font(MealioFont.eyebrow(size: 11))
                 .tracking(1.0)
-                .foregroundColor(MealioColors.textTertiary)
+                .foregroundColor(MealioColors.textSecondary)
             
-            TextField("A special tip to make this dish exceptional...", text: $vm.chefSecret, axis: .vertical)
-                .font(.system(size: 14))
+            TextField("", text: $vm.chefSecret, prompt: Text("A pro tip or finish that makes this dish sing...").foregroundColor(MealioColors.textTertiary), axis: .vertical)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(MealioColors.textPrimary)
+                .tint(MealioColors.terracotta)
                 .lineLimit(2...3)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
-                .background(MealioColors.cardLight)
-                .cornerRadius(16)
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(MealioColors.divider, lineWidth: 0.8))
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(hex: 0xDCD5CB), lineWidth: 1.2))
         }
         .padding(.horizontal, 20)
     }
@@ -568,7 +704,7 @@ public struct AddRecipeSheet: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(vm.isValid ? MealioColors.terracotta : MealioColors.textTertiary.opacity(0.4))
+            .background(vm.isValid ? MealioColors.terracotta : MealioColors.textTertiary.opacity(0.45))
             .cornerRadius(30)
             .shadow(color: vm.isValid ? MealioColors.terracotta.opacity(0.35) : Color.clear, radius: 10, x: 0, y: 4)
         }

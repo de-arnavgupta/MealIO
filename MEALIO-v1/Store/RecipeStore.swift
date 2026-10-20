@@ -44,7 +44,7 @@ public class RecipeStore: ObservableObject {
         self.featuredRecipe = initialFeatured
         self.moodComfortRecipe = MockData.pastaRecipe
         self.moodBakeRecipe = MockData.pearTartRecipe
-        self.savedRecipeIds = [initialFeatured.id]
+        self.savedRecipeIds = []
         self.groceryItems = initialFeatured.ingredients.filter { !$0.isInPantry }
         
         loadAllRecipes()
