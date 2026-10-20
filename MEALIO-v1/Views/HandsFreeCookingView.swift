@@ -2,10 +2,14 @@ import SwiftUI
 
 public struct HandsFreeCookingView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var session: CookingSession
+    @ObservedObject private var session: CookingSession
+    
+    public init(session: CookingSession) {
+        self.session = session
+    }
     
     public init(recipe: Recipe, initialStepIndex: Int? = nil) {
-        _session = StateObject(wrappedValue: CookingSession(recipe: recipe, initialStepIndex: initialStepIndex))
+        self.session = CookingSession(recipe: recipe, initialStepIndex: initialStepIndex)
     }
     
     public var body: some View {

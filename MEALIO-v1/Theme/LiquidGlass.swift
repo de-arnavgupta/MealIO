@@ -1,9 +1,9 @@
 import SwiftUI
 import UIKit
 
-// MARK: - Apple Human Interface Guidelines: Liquid Glass System
-// Re-creates the native iOS translucent, physically reactive material layer
-// with real-time optical blur, luminous crystalline refraction, and specular edge lensing.
+// MARK: - Apple Human Interface Guidelines: Liquid Glass 2.0 System
+// Re-creates the native iOS 26/27 translucent, physically reactive material layer
+// with real-time optical blur, double-bevel specular refraction, and fluid press dynamics.
 
 public struct LiquidGlassModifier: ViewModifier {
     public var cornerRadius: CGFloat
@@ -22,24 +22,24 @@ public struct LiquidGlassModifier: ViewModifier {
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                         .fill(.ultraThinMaterial)
                     
-                    // Luminous white tint: brightens the material so it blends cleanly with warm ivory (#FBF9F4)
-                    // without becoming murky or dark grey.
+                    // Luminous white foundation: brightens material so it harmonizes with warm ivory (#FBF9F4)
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                         .fill(Color.white.opacity(0.68))
                     
                     if let tint = tint {
                         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(tint.opacity(0.12))
+                            .fill(tint.opacity(0.10))
                     }
                     
-                    // Ambient specular sheen: subtle upper light reflection
+                    // Living ambient specular sheen: light refraction across surface
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.40),
-                                    Color.white.opacity(0.10),
-                                    Color.clear
+                                    Color.white.opacity(0.48),
+                                    Color.white.opacity(0.16),
+                                    Color.clear,
+                                    Color.white.opacity(0.06)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -48,21 +48,38 @@ public struct LiquidGlassModifier: ViewModifier {
                 }
             }
             .overlay {
-                // Precision glass refraction rim / specular highlight border
+                // Double-Bevel Specular Edging:
+                // 1. Outer high-contrast refraction boundary
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.92),
-                                Color.white.opacity(0.45),
+                                Color.white.opacity(0.95),
+                                Color.white.opacity(0.50),
                                 Color.white.opacity(0.15),
-                                Color.white.opacity(0.60)
+                                Color.white.opacity(0.65)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         lineWidth: 0.85
                     )
+            }
+            .overlay {
+                // 2. Inner specular bevel highlight for authentic crystalline depth
+                RoundedRectangle(cornerRadius: max(0, cornerRadius - 1), style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.50),
+                                Color.clear
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 0.5
+                    )
+                    .padding(0.7)
             }
             .shadow(color: Color(hex: 0x4A3B32, alpha: 0.04), radius: 12, x: 0, y: 3)
     }
@@ -82,7 +99,6 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
             .background {
                 ZStack {
                     if isSelected {
-                        // Radiant culinary terracotta glass when selected - harmonious & bright, never harsh black
                         Capsule(style: .continuous)
                             .fill(tint ?? MealioColors.terracotta)
                         
@@ -91,26 +107,39 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color.white.opacity(0.28),
+                                        Color.white.opacity(0.32),
+                                        Color.white.opacity(0.06),
                                         Color.clear,
-                                        Color.black.opacity(0.06)
+                                        Color.black.opacity(0.05)
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
                     } else {
-                        // Luminous crystalline frosted base
                         Capsule(style: .continuous)
                             .fill(.ultraThinMaterial)
                         
                         Capsule(style: .continuous)
-                            .fill(Color.white.opacity(0.70))
+                            .fill(Color.white.opacity(0.72))
                         
                         if let tint = tint {
                             Capsule(style: .continuous)
                                 .fill(tint.opacity(0.10))
                         }
+                        
+                        // Ambient upper light sheen
+                        Capsule(style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.40),
+                                        Color.clear
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
                     }
                 }
             }
@@ -119,13 +148,13 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
                     .stroke(
                         LinearGradient(
                             colors: isSelected ? [
-                                Color.white.opacity(0.55),
-                                Color.white.opacity(0.20)
+                                Color.white.opacity(0.65),
+                                Color.white.opacity(0.25)
                             ] : [
-                                Color.white.opacity(0.92),
-                                Color.white.opacity(0.45),
-                                Color.white.opacity(0.15),
-                                Color.white.opacity(0.55)
+                                Color.white.opacity(0.95),
+                                Color.white.opacity(0.50),
+                                Color.white.opacity(0.18),
+                                Color.white.opacity(0.60)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -133,12 +162,41 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
                         lineWidth: 0.85
                     )
             }
+            .overlay {
+                if !isSelected {
+                    Capsule(style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.55),
+                                    Color.clear
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 0.5
+                        )
+                        .padding(0.7)
+                }
+            }
             .shadow(
-                color: isSelected ? (tint ?? MealioColors.terracotta).opacity(0.22) : Color(hex: 0x4A3B32, alpha: 0.03),
+                color: isSelected ? (tint ?? MealioColors.terracotta).opacity(0.24) : Color(hex: 0x4A3B32, alpha: 0.035),
                 radius: isSelected ? 6 : 4,
                 x: 0,
                 y: 2
             )
+    }
+}
+
+public struct LiquidGlassPressStyle: ButtonStyle {
+    public init() {}
+    
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .opacity(configuration.isPressed ? 0.92 : 1.0)
+            .brightness(configuration.isPressed ? 0.03 : 0.0)
+            .animation(.spring(response: 0.28, dampingFraction: 0.65), value: configuration.isPressed)
     }
 }
 
@@ -154,6 +212,18 @@ public struct HapticFeedback {
         generator.prepare()
         generator.impactOccurred()
     }
+    
+    public static func medium() {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+    }
+    
+    public static func success() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(.success)
+    }
 }
 
 extension View {
@@ -163,5 +233,9 @@ extension View {
     
     public func liquidGlassCapsule(tint: Color? = nil, isSelected: Bool = false) -> some View {
         self.modifier(LiquidGlassCapsuleModifier(tint: tint, isSelected: isSelected))
+    }
+    
+    public func liquidPressable() -> some View {
+        self.buttonStyle(LiquidGlassPressStyle())
     }
 }

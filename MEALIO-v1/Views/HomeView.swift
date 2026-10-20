@@ -88,15 +88,22 @@ public struct HomeView: View {
         }
         .sheet(isPresented: $vm.showingFilterSheet) {
             FilterSheetView(store: store)
-                .presentationDetents([.fraction(0.85), .large])
+                .presentationDetents([.fraction(0.52), .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(32)
+                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.52)))
         }
         .sheet(isPresented: $vm.showingProfileSheet) {
             UserProfileSheet(store: store)
                 .presentationDetents([.fraction(0.65), .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(32)
         }
         .sheet(isPresented: $vm.showingWisdomSheet) {
             KitchenWisdomSheet(activeWisdom: store.activeWisdom)
-                .presentationDetents([.fraction(0.75), .large])
+                .presentationDetents([.fraction(0.72), .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(32)
         }
         .sheet(isPresented: Binding<Bool>(
             get: { vm.activeCollectionTitle != nil },
@@ -110,7 +117,9 @@ public struct HomeView: View {
                     recipes: vm.activeCollectionRecipes,
                     selectedRecipeForNavigation: $selectedRecipeForNavigation
                 )
-                .presentationDetents([.large])
+                .presentationDetents([.fraction(0.88), .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(32)
             }
         }
     }
@@ -186,7 +195,7 @@ public struct HomeView: View {
                     Circle()
                         .fill(
                             (store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil) ?
-                            MealioColors.terracotta : Color.white.opacity(0.4)
+                            MealioColors.terracotta : Color.white.opacity(0.65)
                         )
                         .frame(width: 32, height: 32)
                     
@@ -205,7 +214,7 @@ public struct HomeView: View {
                     }
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(LiquidGlassPressStyle())
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -220,7 +229,7 @@ public struct HomeView: View {
                     let isSelected = store.selectedCategory == category
                     Button(action: {
                         HapticFeedback.selection()
-                        withAnimation(.spring(response: 0.28, dampingFraction: 0.76)) {
+                        withAnimation(.spring(response: 0.30, dampingFraction: 0.74)) {
                             store.selectedCategory = category
                         }
                     }) {
@@ -231,7 +240,7 @@ public struct HomeView: View {
                             .padding(.vertical, 10)
                             .liquidGlassCapsule(isSelected: isSelected)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(LiquidGlassPressStyle())
                 }
             }
             .padding(.horizontal, 20)
@@ -619,7 +628,7 @@ public struct HomeView: View {
                                 .padding(.vertical, 7)
                                 .liquidGlassCapsule(tint: isSelected ? MealioColors.terracotta : nil, isSelected: isSelected)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(LiquidGlassPressStyle())
                     }
                 }
                 .padding(.horizontal, 20)

@@ -15,6 +15,7 @@ public class RecipeStore: ObservableObject {
     @Published public var featuredRecipe: Recipe
     @Published public var savedRecipeIds: Set<UUID>
     @Published public var groceryItems: [Ingredient]
+    @Published public var checkedGroceryItemIds: Set<UUID> = []
     
     // Dynamic Rotating Feed States
     @Published public var eveningEditRecipes: [Recipe] = []
@@ -33,6 +34,9 @@ public class RecipeStore: ObservableObject {
     @Published public var effortFilter: String? = nil
     @Published public var currentServings: Int = 2
     @Published public var groceryDestination: String = "This week's table"
+    
+    // Active Cooking Session (Live Activity & Dynamic Island)
+    @Published public var activeCookingSession: CookingSession? = nil
     
     public init() {
         let initialFeatured = MockData.scallopsRecipe
@@ -279,11 +283,43 @@ public class RecipeStore: ObservableObject {
     
     public func removeGroceryItem(id: UUID) {
         groceryItems.removeAll(where: { $0.id == id })
+        checkedGroceryItemIds.remove(id)
+    }
+    
+    public func toggleGroceryItemChecked(id: UUID) {
+        if checkedGroceryItemIds.contains(id) {
+            checkedGroceryItemIds.remove(id)
+        } else {
+            checkedGroceryItemIds.insert(id)
+        }
+    }
+    
+    public func clearCheckedGroceryItems() {
+        groceryItems.removeAll(where: { checkedGroceryItemIds.contains($0.id) })
+        checkedGroceryItemIds.removeAll()
     }
     
     public func resetFilters() {
         selectedCuisineFilter = nil
         maxTimeFilter = nil
         effortFilter = nil
+    }
+    
+    // MARK: - Live Activity Cooking Session
+    public func startCookingSession(recipe: Recipe, initialStepIndex: Int? = nil) -> CookingSession {
+        if let existing = activeCookingSession, existing.recipe.id == recipe.id {
+            if let idx = initialStepIndex {
+                existing.currentStepIndex = idx
+            }
+            return existing
+        }
+        let session = CookingSession(recipe: recipe, initialStepIndex: initialStepIndex)
+        self.activeCookingSession = session
+        return session
+    }
+    
+    public func endCookingSession() {
+        activeCookingSession?.pauseTimer()
+        activeCookingSession = nil
     }
 }

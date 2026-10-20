@@ -88,11 +88,15 @@ public struct RecipeDetailView: View {
         .navigationBarBackButtonHidden(true)
         .sheet(isPresented: $vm.showingGrocerySheet) {
             GroceryListSheet(store: store, recipe: recipe, servings: vm.servings)
-                .presentationDetents([.fraction(0.85), .large])
-                .presentationDragIndicator(.hidden)
+                .presentationDetents([.fraction(0.55), .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(32)
+                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.55)))
         }
         .fullScreenCover(isPresented: $vm.showingHandsFreeCooking) {
-            HandsFreeCookingView(recipe: recipe, initialStepIndex: vm.cookingInitialStep)
+            HandsFreeCookingView(
+                session: store.startCookingSession(recipe: recipe, initialStepIndex: vm.cookingInitialStep)
+            )
         }
         .alert("From the kitchen of \(recipe.authorName)", isPresented: $vm.showingAuthorSheet) {
             Button("Close", role: .cancel) {}
@@ -144,16 +148,20 @@ public struct RecipeDetailView: View {
                     Spacer()
                     
                     Button(action: {
-                        store.toggleSave(recipe.id)
+                        HapticFeedback.light()
+                        withAnimation(.spring(response: 0.32, dampingFraction: 0.65)) {
+                            store.toggleSave(recipe.id)
+                        }
                     }) {
                         Image(systemName: store.isRecipeSaved(recipe.id) ? "bookmark.fill" : "bookmark")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(store.isRecipeSaved(recipe.id) ? MealioColors.terracottaLight : .white)
+                            .symbolEffect(.bounce, value: store.isRecipeSaved(recipe.id))
                             .frame(width: 40, height: 40)
                             .background(Color.black.opacity(0.45))
                             .clipShape(Circle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(LiquidGlassPressStyle())
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 56)

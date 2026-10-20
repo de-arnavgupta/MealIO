@@ -41,7 +41,7 @@ public struct CustomTabBar: View {
                 let isSelected = selectedTab == tab
                 Button(action: {
                     HapticFeedback.light()
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) {
+                    withAnimation(.spring(response: 0.36, dampingFraction: 0.70)) {
                         selectedTab = tab
                     }
                 }) {
@@ -50,8 +50,9 @@ public struct CustomTabBar: View {
                             Image(systemName: isSelected ? tab.selectedIconName : tab.iconName)
                                 .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
                                 .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
-                                .scaleEffect(isSelected ? 1.08 : 0.96)
-                                .animation(.spring(response: 0.32, dampingFraction: 0.70), value: isSelected)
+                                .scaleEffect(isSelected ? 1.10 : 0.94)
+                                .symbolEffect(.bounce, value: isSelected)
+                                .animation(.spring(response: 0.34, dampingFraction: 0.65), value: isSelected)
                                 .frame(height: 24)
                             
                             if tab == .groceries && groceryCount > 0 {
@@ -70,25 +71,52 @@ public struct CustomTabBar: View {
                         Text(tab.rawValue)
                             .font(.system(size: 11, weight: isSelected ? .bold : .medium))
                             .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
-                            .scaleEffect(isSelected ? 1.02 : 1.0)
+                            .scaleEffect(isSelected ? 1.04 : 0.98)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
                     .background {
                         if isSelected {
-                            Capsule(style: .continuous)
-                                .fill(MealioColors.terracottaLight.opacity(0.85))
-                                .overlay(
-                                    Capsule(style: .continuous)
-                                        .stroke(MealioColors.terracotta.opacity(0.18), lineWidth: 0.8)
-                                )
-                                .padding(.horizontal, 5)
-                                .matchedGeometryEffect(id: "activeTabIndicator", in: tabNamespace)
+                            // Fluid mercury glass indicator with double specular highlight
+                            ZStack {
+                                Capsule(style: .continuous)
+                                    .fill(MealioColors.terracottaLight.opacity(0.92))
+                                
+                                // Ambient caustic inner reflection
+                                Capsule(style: .continuous)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.50),
+                                                Color.white.opacity(0.12),
+                                                MealioColors.terracotta.opacity(0.08)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                
+                                // Specular edge rim
+                                Capsule(style: .continuous)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.85),
+                                                MealioColors.terracotta.opacity(0.25)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 0.9
+                                    )
+                            }
+                            .padding(.horizontal, 4)
+                            .matchedGeometryEffect(id: "activeTabIndicator", in: tabNamespace)
                         }
                     }
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(LiquidGlassPressStyle())
             }
         }
         .padding(.horizontal, 8)
