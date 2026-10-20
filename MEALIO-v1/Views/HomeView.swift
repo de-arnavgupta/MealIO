@@ -441,6 +441,9 @@ public struct HomeView: View {
                             },
                             onToggleSave: {
                                 store.toggleSave(recipe.id)
+                            },
+                            onAddToGroceries: {
+                                store.addIngredientsToGroceryList(recipe.ingredients.filter { !$0.isInPantry })
                             }
                         )
                         .frame(width: 175)
@@ -499,6 +502,9 @@ public struct HomeView: View {
                             },
                             onToggleSave: {
                                 store.toggleSave(recipe.id)
+                            },
+                            onAddToGroceries: {
+                                store.addIngredientsToGroceryList(recipe.ingredients.filter { !$0.isInPantry })
                             }
                         )
                         .frame(width: 175)
@@ -641,6 +647,9 @@ public struct HomeView: View {
                         },
                         onToggleSave: {
                             store.toggleSave(recipe.id)
+                        },
+                        onAddToGroceries: {
+                            store.addIngredientsToGroceryList(recipe.ingredients.filter { !$0.isInPantry })
                         }
                     )
                 }
@@ -711,6 +720,9 @@ public struct HomeView: View {
                             },
                             onToggleSave: {
                                 store.toggleSave(recipe.id)
+                            },
+                            onAddToGroceries: {
+                                store.addIngredientsToGroceryList(recipe.ingredients.filter { !$0.isInPantry })
                             }
                         )
                     }
@@ -746,6 +758,9 @@ public struct HomeView: View {
                         },
                         onToggleSave: {
                             store.toggleSave(recipe.id)
+                        },
+                        onAddToGroceries: {
+                            store.addIngredientsToGroceryList(recipe.ingredients.filter { !$0.isInPantry })
                         }
                     )
                 }

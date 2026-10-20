@@ -5,6 +5,7 @@ public struct RecipeCardView: View {
     var isSaved: Bool = false
     let onSelect: () -> Void
     var onToggleSave: (() -> Void)? = nil
+    var onAddToGroceries: (() -> Void)? = nil
     
     @ObservedObject private var paletteExtractor = ImagePaletteExtractor.shared
     
@@ -12,12 +13,14 @@ public struct RecipeCardView: View {
         recipe: Recipe,
         isSaved: Bool = false,
         onSelect: @escaping () -> Void,
-        onToggleSave: (() -> Void)? = nil
+        onToggleSave: (() -> Void)? = nil,
+        onAddToGroceries: (() -> Void)? = nil
     ) {
         self.recipe = recipe
         self.isSaved = isSaved
         self.onSelect = onSelect
         self.onToggleSave = onToggleSave
+        self.onAddToGroceries = onAddToGroceries
     }
     
     public var body: some View {
@@ -90,6 +93,36 @@ public struct RecipeCardView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            if let onToggleSave = onToggleSave {
+                Button {
+                    HapticFeedback.light()
+                    onToggleSave()
+                } label: {
+                    Label(
+                        isSaved ? "Remove from Saved" : "Save Recipe",
+                        systemImage: isSaved ? "bookmark.slash" : "bookmark"
+                    )
+                }
+            }
+            
+            if let onAddToGroceries = onAddToGroceries {
+                Button {
+                    HapticFeedback.light()
+                    onAddToGroceries()
+                } label: {
+                    Label("Add to Groceries", systemImage: "basket")
+                }
+            }
+            
+            ShareLink(
+                item: "Check out \(recipe.title) on Meal-IO: \(recipe.subtitle)",
+                subject: Text(recipe.title),
+                message: Text("Ready in \(recipe.totalTime) · \(recipe.effort.capitalized) · ★ \(String(format: "%.1f", recipe.rating))")
+            ) {
+                Label("Share Recipe", systemImage: "square.and.arrow.up")
+            }
+        }
         .animation(.easeInOut(duration: 0.25), value: palette.backgroundColor)
     }
 }

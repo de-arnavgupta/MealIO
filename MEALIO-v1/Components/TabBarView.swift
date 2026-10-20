@@ -14,11 +14,21 @@ public enum MainTab: String, CaseIterable {
         case .myKitchen: return "fork.knife"
         }
     }
+    
+    var selectedIconName: String {
+        switch self {
+        case .discover: return "safari.fill"
+        case .saved: return "bookmark.fill"
+        case .groceries: return "basket.fill"
+        case .myKitchen: return "fork.knife"
+        }
+    }
 }
 
 public struct CustomTabBar: View {
     @Binding var selectedTab: MainTab
     var groceryCount: Int = 0
+    @Namespace private var tabNamespace
     
     public init(selectedTab: Binding<MainTab>, groceryCount: Int = 0) {
         self._selectedTab = selectedTab
@@ -30,16 +40,18 @@ public struct CustomTabBar: View {
             ForEach(MainTab.allCases, id: \.self) { tab in
                 let isSelected = selectedTab == tab
                 Button(action: {
-                    HapticFeedback.selection()
-                    withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+                    HapticFeedback.light()
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) {
                         selectedTab = tab
                     }
                 }) {
                     VStack(spacing: 3) {
                         ZStack(alignment: .topTrailing) {
-                            Image(systemName: tab.iconName)
+                            Image(systemName: isSelected ? tab.selectedIconName : tab.iconName)
                                 .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
                                 .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
+                                .scaleEffect(isSelected ? 1.08 : 0.96)
+                                .animation(.spring(response: 0.32, dampingFraction: 0.70), value: isSelected)
                                 .frame(height: 24)
                             
                             if tab == .groceries && groceryCount > 0 {
@@ -51,21 +63,27 @@ public struct CustomTabBar: View {
                                     .background(MealioColors.terracotta)
                                     .clipShape(Capsule())
                                     .offset(x: 12, y: -4)
+                                    .transition(.scale.combined(with: .opacity))
                             }
                         }
                         
                         Text(tab.rawValue)
                             .font(.system(size: 11, weight: isSelected ? .bold : .medium))
                             .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
+                            .scaleEffect(isSelected ? 1.02 : 1.0)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
                     .background {
                         if isSelected {
-                            Capsule()
-                                .fill(MealioColors.terracottaLight.opacity(0.8))
-                                .padding(.horizontal, 4)
-                                .transition(.opacity)
+                            Capsule(style: .continuous)
+                                .fill(MealioColors.terracottaLight.opacity(0.85))
+                                .overlay(
+                                    Capsule(style: .continuous)
+                                        .stroke(MealioColors.terracotta.opacity(0.18), lineWidth: 0.8)
+                                )
+                                .padding(.horizontal, 5)
+                                .matchedGeometryEffect(id: "activeTabIndicator", in: tabNamespace)
                         }
                     }
                     .contentShape(Rectangle())
