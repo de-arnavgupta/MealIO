@@ -76,7 +76,7 @@ public class RecipeStore: ObservableObject {
         
         // Luxury dinner pool across all cuisines
         let luxuryPool = allRecipes.filter {
-            $0.effort == "A little finesse" || $0.effort == "Worth the wait" || $0.rating >= 4.8
+            $0.effort == "Medium" || $0.effort == "Hard" || $0.effort == "A little finesse" || $0.effort == "Worth the wait" || $0.rating >= 4.8
         }
         let pool = luxuryPool.isEmpty ? allRecipes : luxuryPool
         
@@ -305,6 +305,19 @@ public class RecipeStore: ObservableObject {
                 groceryItems.append(item)
             }
         }
+    }
+    
+    public func addCustomGroceryItem(name: String, quantity: String? = nil, aisleCategory: String = "Pantry") {
+        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanName.isEmpty else { return }
+        let cleanQty = quantity?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayOverride = (cleanQty?.isEmpty ?? true) ? nil : cleanQty
+        let newItem = Ingredient(
+            name: cleanName,
+            displayOverride: displayOverride,
+            aisleCategory: aisleCategory
+        )
+        groceryItems.insert(newItem, at: 0)
     }
     
     public func removeGroceryItem(id: UUID) {

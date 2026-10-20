@@ -17,23 +17,36 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                Group {
+                ZStack {
                     switch vm.selectedTab {
                     case .discover:
                         HomeView(
                             store: vm.store,
                             selectedRecipeForNavigation: $vm.selectedRecipeForNavigation
                         )
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.985)),
+                            removal: .opacity
+                        ))
                     case .groceries:
                         GroceriesView(
                             store: vm.store
                         )
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.985)),
+                            removal: .opacity
+                        ))
                     case .profile:
                         ProfileView(
                             store: vm.store
                         )
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.985)),
+                            removal: .opacity
+                        ))
                     }
                 }
+                .animation(.spring(response: 0.35, dampingFraction: 0.82), value: vm.selectedTab)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
                 // Bottom Dock: Dynamic Island / Live Activity Cooking Pill + Tab Bar

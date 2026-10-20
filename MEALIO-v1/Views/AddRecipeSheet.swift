@@ -108,7 +108,7 @@ public class AddRecipeViewModel: ObservableObject {
             collectionTag: "Original Recipes",
             totalTime: totalTimeDisplay,
             totalTimeMinutes: totalTimeMinutes,
-            effort: effort.uppercased(),
+            effort: effort.capitalized,
             rating: 5.0,
             homeCooksCount: 1,
             description: subtitle.isEmpty ? "A custom handcrafted recipe created in your kitchen." : subtitle,

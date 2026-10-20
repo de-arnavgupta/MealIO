@@ -12,7 +12,7 @@ public struct FilterSheetView: View {
         ("Under 45 min", 45),
         ("Over 60 min", 60)
     ]
-    let effortOptions = ["All", "Easy", "A little finesse", "Worth the wait"]
+    let effortOptions = ["All", "Easy", "Medium", "Hard"]
     let dietaryOptions = ["All", "Vegetarian", "Non-Veg", "Vegan", "Halal"]
     
     public var body: some View {

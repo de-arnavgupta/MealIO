@@ -81,6 +81,7 @@ public class HomeViewModel: ObservableObject {
     @Published public var activeCollectionSubtitle: String = ""
     @Published public var activeCollectionRecipes: [Recipe] = []
     @Published public var selectedExploreCuisineTab: String = "All"
+    @Published public var selectedExploreLetterTab: String = "All"
     @Published public var visibleRecipesCount: Int = 16
     
     public init() {}
@@ -430,63 +431,80 @@ public struct HomeView: View {
                 }
                 .allowsHitTesting(false)
                 
-                // Bottom card metadata pinned to the window, dynamically updating with selected photo
-                if eveningItems.indices.contains(vm.selectedHeroIndex) {
-                    let currentRecipe = eveningItems[vm.selectedHeroIndex]
-                    
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(currentRecipe.title)
-                            .font(.system(size: 26, weight: .bold))
-                            .foregroundColor(.white)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-                            .id("title-\(currentRecipe.id)")
-                            .transition(.opacity)
+                // Bottom content: Recipe metadata + Centered pagination indicators cleanly stacked
+                VStack(spacing: 10) {
+                    if eveningItems.indices.contains(vm.selectedHeroIndex) {
+                        let currentRecipe = eveningItems[vm.selectedHeroIndex]
                         
-                        HStack(spacing: 4) {
-                            Text(currentRecipe.totalTime)
-                            Text("·")
-                            Text(currentRecipe.effort)
-                            HStack(spacing: 2) {
-                                Image(systemName: "star.fill")
-                                    .font(.system(size: 9))
-                                    .foregroundColor(.white)
-                                Text(String(format: "%.1f", currentRecipe.rating))
-                                    .font(.system(size: 12, weight: .semibold))
-                            }
-                        }
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(Color.white.opacity(0.92))
-                        .lineLimit(1)
-                        .id("meta-\(currentRecipe.id)")
-                        .transition(.opacity)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 18)
-                    .allowsHitTesting(false)
-                }
-                
-                // Centered tapered pagination dots pinned to the window
-                HStack(spacing: 5) {
-                    ForEach(0..<min(totalItems, 7), id: \.self) { dotIdx in
-                        let distance = abs(dotIdx - vm.selectedHeroIndex)
-                        let diameter: CGFloat = distance == 0 ? 7.5 : (distance == 1 ? 5.5 : (distance == 2 ? 4.5 : 3.5))
-                        let opacity: Double = distance == 0 ? 1.0 : (distance == 1 ? 0.6 : (distance == 2 ? 0.4 : 0.25))
-                        
-                        Circle()
-                            .fill(Color.white.opacity(opacity))
-                            .frame(width: diameter, height: diameter)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                                    vm.selectedHeroIndex = dotIdx
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(currentRecipe.title)
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                                .shadow(color: Color.black.opacity(0.65), radius: 3, x: 0, y: 1)
+                                .id("title-\(currentRecipe.id)")
+                                .transition(.opacity)
+                            
+                            HStack(spacing: 6) {
+                                Text(currentRecipe.totalTime)
+                                Text("·")
+                                Text(currentRecipe.effort)
+                                Text("·")
+                                HStack(spacing: 3) {
+                                    Image(systemName: "star.fill")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(MealioColors.terracotta)
+                                    Text(String(format: "%.1f", currentRecipe.rating))
+                                        .font(.system(size: 12, weight: .semibold))
                                 }
                             }
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(Color.white.opacity(0.92))
+                            .lineLimit(1)
+                            .shadow(color: Color.black.opacity(0.55), radius: 2, x: 0, y: 1)
+                            .id("meta-\(currentRecipe.id)")
+                            .transition(.opacity)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .allowsHitTesting(false)
                     }
+                    
+                    // Centered, highly visible Liquid Glass Pagination Pill
+                    HStack(spacing: 6) {
+                        ForEach(0..<min(totalItems, 7), id: \.self) { dotIdx in
+                            let isSelected = dotIdx == vm.selectedHeroIndex
+                            Capsule()
+                                .fill(isSelected ? Color.white : Color.white.opacity(0.45))
+                                .frame(width: isSelected ? 18 : 6, height: 6)
+                                .shadow(color: Color.black.opacity(0.4), radius: 2, x: 0, y: 1)
+                                .animation(.spring(response: 0.35, dampingFraction: 0.75), value: vm.selectedHeroIndex)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    HapticFeedback.light()
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                        vm.selectedHeroIndex = dotIdx
+                                    }
+                                }
+                        }
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        Capsule()
+                            .fill(Color.black.opacity(0.35))
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.white.opacity(0.25), lineWidth: 0.8)
+                    )
+                    .shadow(color: Color.black.opacity(0.20), radius: 6, x: 0, y: 2)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
-                .offset(x: 20)
-                .padding(.bottom, 18)
-                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 14)
+                .frame(maxWidth: .infinity)
             }
             .frame(height: 270)
             .cornerRadius(28)
@@ -670,7 +688,7 @@ public struct HomeView: View {
         }
     }
     
-    // MARK: - Section 5: Explore All Recipes (100% Uniform Card Dimensions)
+    // MARK: - Section 5: Explore All Recipes (Alphabetical Order A–Z)
     private var exploreAllRecipesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -678,7 +696,7 @@ public struct HomeView: View {
                     Text("Explore all recipes")
                         .font(MealioFont.editorialTitle(size: 22))
                         .foregroundColor(MealioColors.textPrimary)
-                    Text("All \(store.allRecipes.count) recipes across 10 cuisines")
+                    Text("All \(store.allRecipes.count) recipes in alphabetical order A–Z")
                         .font(.system(size: 12, weight: .regular))
                         .foregroundColor(MealioColors.textSecondary)
                 }
@@ -686,23 +704,24 @@ public struct HomeView: View {
                 Spacer()
             }
             
-            // Cuisine Quick Sub-Tabs (Liquid Glass)
-            let tabs = ["All", "Italian", "French", "Japanese", "Mexican", "Indian", "Mediterranean", "Thai", "Spanish", "American", "Middle Eastern"]
+            // Alphabetical Quick Filter Tabs (Liquid Glass)
+            let letters = ["All", "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "Y", "Z"]
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    ForEach(tabs, id: \.self) { tab in
-                        let isSelected = vm.selectedExploreCuisineTab == tab
+                    ForEach(letters, id: \.self) { letter in
+                        let isSelected = vm.selectedExploreLetterTab == letter
                         Button(action: {
                             HapticFeedback.light()
                             withAnimation(.spring(response: 0.28, dampingFraction: 0.76)) {
-                                vm.selectedExploreCuisineTab = tab
+                                vm.selectedExploreLetterTab = letter
                                 vm.visibleRecipesCount = 16
                             }
                         }) {
-                            Text(tab)
-                                .font(.system(size: 12, weight: isSelected ? .bold : .medium))
+                            Text(letter)
+                                .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                                 .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
-                                .padding(.horizontal, 14)
+                                .frame(minWidth: letter == "All" ? 38 : 28)
+                                .padding(.horizontal, letter == "All" ? 14 : 10)
                                 .padding(.vertical, 7)
                                 .liquidGlassCapsule(tint: isSelected ? MealioColors.terracotta : nil, isSelected: isSelected)
                         }
@@ -712,11 +731,17 @@ public struct HomeView: View {
                 .padding(.horizontal, 20)
             }
             
+            let sortedRecipes = store.allRecipes.sorted {
+                $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+            }
+            
             let sourceList: [Recipe] = {
-                if vm.selectedExploreCuisineTab == "All" {
-                    return store.allRecipes
+                if vm.selectedExploreLetterTab == "All" {
+                    return sortedRecipes
                 } else {
-                    return store.recipes(forCuisine: vm.selectedExploreCuisineTab)
+                    return sortedRecipes.filter {
+                        $0.title.uppercased().hasPrefix(vm.selectedExploreLetterTab)
+                    }
                 }
             }()
             

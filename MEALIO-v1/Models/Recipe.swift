@@ -151,7 +151,14 @@ public struct Recipe: Identifiable, Hashable, Codable {
         self.collectionTag = (try? c.decodeIfPresent(String.self, forKey: .collectionTag)) ?? "THE EVENING EDIT"
         self.totalTime = (try? c.decodeIfPresent(String.self, forKey: .totalTime)) ?? "30 min"
         self.totalTimeMinutes = (try? c.decodeIfPresent(Int.self, forKey: .totalTimeMinutes)) ?? 30
-        self.effort = (try? c.decodeIfPresent(String.self, forKey: .effort)) ?? "Easy"
+        let decodedEffort = (try? c.decodeIfPresent(String.self, forKey: .effort)) ?? "Easy"
+        if decodedEffort.lowercased().contains("finesse") || decodedEffort.lowercased() == "medium" {
+            self.effort = "Medium"
+        } else if decodedEffort.lowercased().contains("wait") || decodedEffort.lowercased() == "hard" {
+            self.effort = "Hard"
+        } else {
+            self.effort = "Easy"
+        }
         self.rating = (try? c.decodeIfPresent(Double.self, forKey: .rating)) ?? 4.8
         self.homeCooksCount = (try? c.decodeIfPresent(Int.self, forKey: .homeCooksCount)) ?? 100
         self.description = (try? c.decodeIfPresent(String.self, forKey: .description)) ?? ""
