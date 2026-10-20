@@ -1,12 +1,20 @@
 import SwiftUI
 import Combine
 
+public struct HomeScrollOffsetKey: PreferenceKey {
+    public static var defaultValue: CGFloat = 0
+    public static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 public class HomeViewModel: ObservableObject {
     @Published public var selectedHeroIndex: Int = 3
     @Published public var showingFilterSheet: Bool = false
     @Published public var showingProfileSheet: Bool = false
     @Published public var showingWisdomSheet: Bool = false
     @Published public var showingSavedSheet: Bool = false
+    @Published public var isScrolled: Bool = false
     @Published public var activeCollectionTitle: String? = nil
     @Published public var activeCollectionSubtitle: String = ""
     @Published public var activeCollectionRecipes: [Recipe] = []
@@ -28,80 +36,76 @@ public struct HomeView: View {
     
     public var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 24) {
-                // Hero Header: Catchy One-liner + Liquid Glass Saved Bookmark Button
-                HStack(alignment: .center) {
-                    Text("Cook something unforgettable.")
-                        .font(MealioFont.editorialHero(size: 24))
-                        .foregroundColor(MealioColors.textPrimary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.80)
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        HapticFeedback.light()
-                        vm.showingSavedSheet = true
-                    }) {
-                        HStack(spacing: 5) {
-                            Image(systemName: store.savedRecipeIds.isEmpty ? "bookmark" : "bookmark.fill")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(store.savedRecipeIds.isEmpty ? MealioColors.textSecondary : MealioColors.terracotta)
-                                .symbolEffect(.bounce, value: store.savedRecipeIds.count)
+            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                // Scroll tracker
+                GeometryReader { proxy in
+                    let minY = proxy.frame(in: .named("homeScrollSpace")).minY
+                    Color.clear
+                        .preference(key: HomeScrollOffsetKey.self, value: minY)
+                }
+                .frame(height: 0)
+                
+                // Hero Headline
+                Text("Cook something unforgettable.")
+                    .font(MealioFont.editorialHero(size: 26))
+                    .foregroundColor(MealioColors.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.80)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 14)
+                    .padding(.bottom, 8)
+                
+                // Pinned Section: Sticky Search Bar + Save in One Line
+                Section {
+                    VStack(alignment: .leading, spacing: 24) {
+                        // Live Search Results (if user is searching)
+                        if !store.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            searchResultsSection
+                                .padding(.horizontal, 20)
+                        } else {
+                            // Category Filter Pills: "For you", "Quick & easy", "Vegetarian", "High protein", "Seasonal"
+                            categoryPills
                             
-                            if !store.savedRecipeIds.isEmpty {
-                                Text("\(store.savedRecipeIds.count)")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(MealioColors.terracotta)
+                            // If a specific category or filter is active, show filtered results
+                            if store.selectedCategory != .forYou || store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil || store.dietaryFilter != nil {
+                                filteredResultsSection
+                                    .padding(.horizontal, 20)
+                            } else {
+                                // Section 1: "The evening edit" (Dynamic Carousel with daily rotating luxury dishes)
+                                eveningEditSection
+                                
+                                // Section 2: "Last visited" (Horizontal Shelf)
+                                lastVisitedSection
+                                
+                                // Section 3: "Short on time. Not taste." (Dynamic fast weeknight recipes)
+                                shortOnTimeSection
+                                
+                                // Section 4: "Cuisines of the World" (10 World Cuisines Shelf)
+                                cuisinesOfTheWorldSection
+                                
+                                // Section 5: "Explore All Recipes" (Uniform Grid across all 200 recipes)
+                                exploreAllRecipesSection
+                                    .padding(.horizontal, 20)
                             }
                         }
-                        .padding(.horizontal, store.savedRecipeIds.isEmpty ? 11 : 13)
-                        .padding(.vertical, 7)
-                        .liquidGlassCapsule(tint: store.savedRecipeIds.isEmpty ? nil : MealioColors.terracottaLight.opacity(0.4), isSelected: !store.savedRecipeIds.isEmpty)
+                        
+                        // Bottom spacing for tab bar
+                        Spacer()
+                            .frame(height: 80)
                     }
-                    .buttonStyle(LiquidGlassPressStyle())
+                    .padding(.top, 14)
+                } header: {
+                    stickySearchAndSaveBar
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-                
-                // Search & Filter Bar
-                searchBar
-                    .padding(.horizontal, 20)
-                
-                // Live Search Results (if user is searching)
-                if !store.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    searchResultsSection
-                        .padding(.horizontal, 20)
-                } else {
-                    // Category Filter Pills: "For you", "Quick & easy", "Vegetarian", "High protein", "Seasonal"
-                    categoryPills
-                    
-                    // If a specific category or filter is active, show filtered results
-                    if store.selectedCategory != .forYou || store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil || store.dietaryFilter != nil {
-                        filteredResultsSection
-                            .padding(.horizontal, 20)
-                    } else {
-                        // Section 1: "The evening edit" (Dynamic Carousel with daily rotating luxury dishes)
-                        eveningEditSection
-                        
-                        // Section 2: "Last visited" (Horizontal Shelf)
-                        lastVisitedSection
-                        
-                        // Section 3: "Short on time. Not taste." (Dynamic fast weeknight recipes)
-                        shortOnTimeSection
-                        
-                        // Section 4: "Cuisines of the World" (10 World Cuisines Shelf)
-                        cuisinesOfTheWorldSection
-                        
-                        // Section 5: "Explore All Recipes" (Uniform Grid across all 200 recipes)
-                        exploreAllRecipesSection
-                            .padding(.horizontal, 20)
-                    }
+            }
+        }
+        .coordinateSpace(name: "homeScrollSpace")
+        .onPreferenceChange(HomeScrollOffsetKey.self) { minY in
+            let scrolled = minY < -15
+            if vm.isScrolled != scrolled {
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    vm.isScrolled = scrolled
                 }
-                
-                // Bottom spacing for tab bar
-                Spacer()
-                    .frame(height: 80)
             }
         }
         .background(MealioColors.background.ignoresSafeArea())
@@ -148,15 +152,51 @@ public struct HomeView: View {
         }
     }
     
+    // MARK: - Sticky Search Bar & Save in One Horizontal Line
+    private var stickySearchAndSaveBar: some View {
+        HStack(spacing: 10) {
+            searchBar
+            savedButton
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, vm.isScrolled ? 10 : 4)
+        .padding(.bottom, 10)
+        .frame(maxWidth: .infinity)
+        .background {
+            if vm.isScrolled {
+                ZStack(alignment: .bottom) {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .overlay(Color.white.opacity(0.18))
+                        .ignoresSafeArea(edges: .top)
+                    
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.85),
+                                    Color.white.opacity(0.20)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(height: 0.6)
+                }
+                .transition(.opacity)
+            }
+        }
+    }
+    
     // MARK: - Search Bar (Liquid Glass)
     private var searchBar: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: 15, weight: .medium))
                 .foregroundColor(MealioColors.textSecondary)
             
-            TextField("A dish, an ingredient, a craving...", text: $store.searchText)
-                .font(.system(size: 15))
+            TextField("Search dishes, cravings...", text: $store.searchText)
+                .font(.system(size: 14))
                 .foregroundColor(MealioColors.textPrimary)
             
             if !store.searchText.isEmpty {
@@ -165,13 +205,11 @@ public struct HomeView: View {
                     store.searchText = ""
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 15))
+                        .font(.system(size: 14))
                         .foregroundColor(MealioColors.textTertiary)
                 }
                 .buttonStyle(.plain)
             }
-            
-            Spacer()
             
             Button(action: {
                 HapticFeedback.light()
@@ -181,25 +219,55 @@ public struct HomeView: View {
                 ZStack {
                     Circle()
                         .fill(hasActiveFilter ? MealioColors.terracotta : Color.white.opacity(0.65))
-                        .frame(width: 32, height: 32)
+                        .frame(width: 30, height: 30)
                     
                     Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundColor(hasActiveFilter ? .white : MealioColors.textPrimary)
                     
                     if hasActiveFilter {
                         Circle()
                             .fill(Color.white)
-                            .frame(width: 6, height: 6)
-                            .offset(x: 9, y: -9)
+                            .frame(width: 5, height: 5)
+                            .offset(x: 8, y: -8)
                     }
                 }
             }
             .buttonStyle(LiquidGlassPressStyle())
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .liquidGlass(cornerRadius: 24)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(height: 48)
+        .liquidGlass(cornerRadius: 24, isClear: vm.isScrolled)
+    }
+    
+    // MARK: - Saved Button (Liquid Glass)
+    private var savedButton: some View {
+        Button(action: {
+            HapticFeedback.light()
+            vm.showingSavedSheet = true
+        }) {
+            HStack(spacing: 5) {
+                Image(systemName: store.savedRecipeIds.isEmpty ? "bookmark" : "bookmark.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(store.savedRecipeIds.isEmpty ? MealioColors.textSecondary : MealioColors.terracotta)
+                    .symbolEffect(.bounce, value: store.savedRecipeIds.count)
+                
+                if !store.savedRecipeIds.isEmpty {
+                    Text("\(store.savedRecipeIds.count)")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(MealioColors.terracotta)
+                }
+            }
+            .padding(.horizontal, store.savedRecipeIds.isEmpty ? 14 : 13)
+            .frame(height: 48)
+            .liquidGlass(
+                cornerRadius: 24,
+                tint: store.savedRecipeIds.isEmpty ? nil : MealioColors.terracottaLight.opacity(0.4),
+                isClear: vm.isScrolled
+            )
+        }
+        .buttonStyle(LiquidGlassPressStyle())
     }
     
     // MARK: - Category Filter Pills (Liquid Glass)

@@ -128,16 +128,16 @@ public struct CustomTabBar: View {
             .padding(.vertical, 6)
             .liquidGlass(cornerRadius: 32, isClear: true)
             
-            // Standalone Floating Circular Add Recipe Button (Liquid Glass)
+            // Standalone Floating Circular Add Recipe Button (Matching Liquid Glass Tab Bar)
             Button(action: {
                 HapticFeedback.medium()
                 onAddRecipe()
             }) {
                 Image(systemName: "plus")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 54, height: 54)
-                    .liquidGlassCircle(tint: MealioColors.terracotta, isSelected: true)
+                    .font(.system(size: 21, weight: .semibold))
+                    .foregroundColor(MealioColors.terracotta)
+                    .frame(width: 56, height: 56)
+                    .liquidGlassCircle(isClear: true)
             }
             .buttonStyle(LiquidGlassPressStyle())
         }
