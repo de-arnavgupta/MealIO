@@ -36,6 +36,22 @@ public struct HomeScrollOffsetKey: PreferenceKey {
     }
 }
 
+public struct ActiveLetterInfo: Equatable {
+    public let letter: String
+    public let minY: CGFloat
+    public init(letter: String, minY: CGFloat) {
+        self.letter = letter
+        self.minY = minY
+    }
+}
+
+public struct ActiveLetterPreferenceKey: PreferenceKey {
+    public static var defaultValue: [ActiveLetterInfo] = []
+    public static func reduce(value: inout [ActiveLetterInfo], nextValue: () -> [ActiveLetterInfo]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
 public class HomeViewModel: ObservableObject {
     @Published public var selectedHeroIndex: Int = 3
     @Published public var showingFilterSheet: Bool = false
@@ -50,6 +66,7 @@ public class HomeViewModel: ObservableObject {
     @Published public var selectedExploreLetterTab: String = "All"
     @Published public var visibleRecipesCount: Int = 16
     @Published public var activeScrubLetter: String? = nil
+    @Published public var currentVisibleLetter: String = "A"
     
     public init() {}
 }
@@ -66,7 +83,7 @@ public struct HomeView: View {
     
     public var body: some View {
         ScrollViewReader { scrollProxy in
-            ZStack {
+            ZStack(alignment: .trailing) {
                 ScrollView(showsIndicators: false) {
                     LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
                         // Scroll tracker
@@ -116,7 +133,7 @@ public struct HomeView: View {
                                         cuisinesOfTheWorldSection
                                         
                                         // Section 5: "Explore All Recipes" (With Alphabetical Cuisine Filter & Contacts Scroller)
-                                        exploreAllRecipesSection(scrollProxy: scrollProxy)
+                                        exploreAllRecipesSection
                                     }
                                 }
                                 
@@ -139,11 +156,32 @@ public struct HomeView: View {
                         }
                     }
                 }
+                .onPreferenceChange(ActiveLetterPreferenceKey.self) { preferences in
+                    guard vm.activeScrubLetter == nil else { return }
+                    let visible = preferences.filter { $0.minY <= 220 }
+                    if let best = visible.max(by: { $0.minY < $1.minY }) {
+                        if vm.currentVisibleLetter != best.letter {
+                            vm.currentVisibleLetter = best.letter
+                        }
+                    } else if let first = preferences.min(by: { $0.minY < $1.minY }) {
+                        if vm.currentVisibleLetter != first.letter {
+                            vm.currentVisibleLetter = first.letter
+                        }
+                    }
+                }
                 .background(MealioColors.background.ignoresSafeArea())
                 .refreshable {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         store.refreshSessionFeed()
                     }
+                }
+                
+                // Floating Side Alphabet Scroller (pinned to right edge, moves highlight as recipes scroll)
+                if shouldShowAlphabetScroller {
+                    floatingAlphabetScroller(availableLetters: availableLettersSet, scrollProxy: scrollProxy)
+                        .padding(.trailing, 4)
+                        .padding(.bottom, 60)
+                        .transition(.opacity)
                 }
                 
                 // Floating Alphabet Magnifier HUD during scrubbing
@@ -174,6 +212,7 @@ public struct HomeView: View {
                     }
                     .frame(width: 72, height: 72)
                     .shadow(color: Color.black.opacity(0.18), radius: 14, x: 0, y: 5)
+                    .padding(.trailing, 75)
                     .transition(.scale(scale: 0.85).combined(with: .opacity))
                     .allowsHitTesting(false)
                 }
@@ -699,16 +738,31 @@ public struct HomeView: View {
         }
     }
     
+    private var exploreSourceRecipes: [Recipe] {
+        let base = (vm.selectedExploreCuisineTab == "All")
+            ? store.allRecipes
+            : store.recipes(forCuisine: vm.selectedExploreCuisineTab)
+        return base.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+    
+    private var availableLettersSet: Set<String> {
+        Set(exploreSourceRecipes.map { String($0.title.prefix(1)).uppercased() })
+    }
+    
+    private var shouldShowAlphabetScroller: Bool {
+        store.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        store.selectedCategory == .forYou &&
+        store.selectedCuisineFilter == nil &&
+        store.maxTimeFilter == nil &&
+        store.effortFilter == nil &&
+        store.dietaryFilter == nil
+    }
+    
     // MARK: - Section 5: Explore All Recipes (Alphabetical Cuisine Filters + Contacts Side Scroller)
-    private func exploreAllRecipesSection(scrollProxy: ScrollViewProxy) -> some View {
+    private var exploreAllRecipesSection: some View {
         let cuisineTabs = ["All", "American", "French", "Indian", "Italian", "Japanese", "Mediterranean", "Mexican", "Middle Eastern", "Spanish", "Thai"]
         
-        let sourceRecipes: [Recipe] = {
-            let base = (vm.selectedExploreCuisineTab == "All")
-                ? store.allRecipes
-                : store.recipes(forCuisine: vm.selectedExploreCuisineTab)
-            return base.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
-        }()
+        let sourceRecipes = exploreSourceRecipes
         
         // Group by first character of recipe title
         var dict = [String: [Recipe]]()
@@ -719,7 +773,6 @@ public struct HomeView: View {
         let groupedByLetter: [(letter: String, recipes: [Recipe])] = dict.keys.sorted().map { letter in
             (letter: letter, recipes: dict[letter]!)
         }
-        let availableLettersSet = Set(dict.keys)
         
         return VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -760,97 +813,116 @@ public struct HomeView: View {
                 .padding(.horizontal, 20)
             }
             
-            // Grid + Side Contacts Alphabet Scroller
-            HStack(alignment: .top, spacing: 6) {
-                // Grouped 2-Column Grid
-                LazyVStack(alignment: .leading, spacing: 18) {
-                    ForEach(groupedByLetter, id: \.letter) { group in
-                        VStack(alignment: .leading, spacing: 12) {
-                            // Alphabet Section Header
-                            HStack(spacing: 8) {
-                                Text(group.letter)
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(MealioColors.terracotta)
-                                
-                                Rectangle()
-                                    .fill(MealioColors.divider)
-                                    .frame(height: 1)
-                            }
-                            .id("explore-letter-\(group.letter)")
-                            .padding(.top, 4)
+            // Grouped 2-Column Grid (Standard VStack guarantees all letter anchors exist in view tree)
+            VStack(alignment: .leading, spacing: 22) {
+                ForEach(groupedByLetter, id: \.letter) { group in
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Alphabet Section Header with scroll anchor and position tracker
+                        HStack(spacing: 8) {
+                            Text(group.letter)
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(MealioColors.terracotta)
                             
-                            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 14) {
-                                ForEach(group.recipes) { recipe in
-                                    RecipeCardView(
-                                        recipe: recipe,
-                                        isSaved: store.isRecipeSaved(recipe.id),
-                                        onSelect: {
-                                            store.recordVisitedRecipe(recipe)
-                                            selectedRecipeForNavigation = recipe
-                                        },
-                                        onToggleSave: {
-                                            store.toggleSave(recipe.id)
-                                        },
-                                        onAddToGroceries: {
-                                            store.addIngredientsToGroceryList(recipe.ingredients.filter { !$0.isInPantry })
-                                        }
-                                    )
-                                }
+                            Rectangle()
+                                .fill(MealioColors.divider)
+                                .frame(height: 1)
+                        }
+                        .background(
+                            GeometryReader { geo in
+                                let frame = geo.frame(in: .named("homeScrollSpace"))
+                                Color.clear.preference(
+                                    key: ActiveLetterPreferenceKey.self,
+                                    value: [ActiveLetterInfo(letter: group.letter, minY: frame.minY)]
+                                )
+                            }
+                        )
+                        .id("explore-letter-\(group.letter)")
+                        .padding(.top, 4)
+                        
+                        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 14) {
+                            ForEach(group.recipes) { recipe in
+                                RecipeCardView(
+                                    recipe: recipe,
+                                    isSaved: store.isRecipeSaved(recipe.id),
+                                    onSelect: {
+                                        store.recordVisitedRecipe(recipe)
+                                        selectedRecipeForNavigation = recipe
+                                    },
+                                    onToggleSave: {
+                                        store.toggleSave(recipe.id)
+                                    },
+                                    onAddToGroceries: {
+                                        store.addIngredientsToGroceryList(recipe.ingredients.filter { !$0.isInPantry })
+                                    }
+                                )
                             }
                         }
                     }
                 }
-                
-                // Vertical Alphabet Scroller like in iOS Contacts
-                alphabetScroller(availableLetters: availableLettersSet, scrollProxy: scrollProxy)
             }
             .padding(.leading, 20)
-            .padding(.trailing, 6)
+            .padding(.trailing, 28)
         }
     }
     
     // MARK: - Side Alphabet Index Scroller (Native iOS Contacts Style)
-    private func alphabetScroller(availableLetters: Set<String>, scrollProxy: ScrollViewProxy) -> some View {
-        let allLetters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "Y", "Z"]
-        let itemHeight: CGFloat = 13.5
+    private func floatingAlphabetScroller(availableLetters: Set<String>, scrollProxy: ScrollViewProxy) -> some View {
+        let allLetters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+        let itemHeight: CGFloat = 11.5
+        let activeLetter = vm.activeScrubLetter ?? vm.currentVisibleLetter
         
-        return VStack(spacing: 0.5) {
+        return VStack(spacing: 1.0) {
             ForEach(allLetters, id: \.self) { letter in
                 let hasRecipes = availableLetters.contains(letter)
-                Text(letter)
-                    .font(.system(size: 9.0, weight: hasRecipes ? .bold : .regular))
-                    .foregroundColor(hasRecipes ? MealioColors.terracotta : MealioColors.textTertiary.opacity(0.35))
-                    .frame(width: 14, height: itemHeight)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        HapticFeedback.selection()
-                        vm.activeScrubLetter = letter
-                        jumpToLetter(letter, available: availableLetters, scrollProxy: scrollProxy)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                            if vm.activeScrubLetter == letter {
-                                withAnimation { vm.activeScrubLetter = nil }
-                            }
+                let isSelected = (activeLetter == letter)
+                
+                ZStack {
+                    if isSelected {
+                        Circle()
+                            .fill(MealioColors.terracotta)
+                            .frame(width: 14, height: 14)
+                            .transition(.scale)
+                    }
+                    
+                    Text(letter)
+                        .font(.system(size: isSelected ? 9.5 : 8.5, weight: isSelected ? .heavy : (hasRecipes ? .bold : .regular)))
+                        .foregroundColor(
+                            isSelected
+                                ? .white
+                                : (hasRecipes ? MealioColors.terracotta : MealioColors.textTertiary.opacity(0.35))
+                        )
+                }
+                .frame(width: 16, height: itemHeight)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    HapticFeedback.selection()
+                    vm.activeScrubLetter = letter
+                    jumpToLetter(letter, available: availableLetters, scrollProxy: scrollProxy, animated: true)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        if vm.activeScrubLetter == letter {
+                            withAnimation { vm.activeScrubLetter = nil }
                         }
                     }
+                }
             }
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 2)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 3)
         .background(
             Capsule()
-                .fill(Color.white.opacity(0.08))
+                .fill(Color.white.opacity(0.12))
                 .background(.ultraThinMaterial)
                 .clipShape(Capsule())
         )
         .overlay(
             Capsule()
-                .stroke(Color.white.opacity(0.35), lineWidth: 0.6)
+                .stroke(Color.white.opacity(0.45), lineWidth: 0.6)
         )
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
-                    let step = itemHeight + 0.5
+                    let step = itemHeight + 1.0
                     let totalHeight = CGFloat(allLetters.count) * step
                     let clampedY = min(max(0, value.location.y), totalHeight - 1)
                     let index = min(max(0, Int(clampedY / step)), allLetters.count - 1)
@@ -858,30 +930,37 @@ public struct HomeView: View {
                     if vm.activeScrubLetter != letter {
                         vm.activeScrubLetter = letter
                         HapticFeedback.selection()
-                        jumpToLetter(letter, available: availableLetters, scrollProxy: scrollProxy)
+                        jumpToLetter(letter, available: availableLetters, scrollProxy: scrollProxy, animated: false)
                     }
                 }
                 .onEnded { _ in
-                    withAnimation(.easeOut(duration: 0.3)) {
+                    withAnimation(.easeOut(duration: 0.25)) {
                         vm.activeScrubLetter = nil
                     }
                 }
         )
     }
     
-    private func jumpToLetter(_ target: String, available: Set<String>, scrollProxy: ScrollViewProxy) {
-        if available.contains(target) {
-            withAnimation(.easeInOut(duration: 0.25)) {
-                scrollProxy.scrollTo("explore-letter-\(target)", anchor: .top)
+    private func jumpToLetter(_ target: String, available: Set<String>, scrollProxy: ScrollViewProxy, animated: Bool) {
+        let destinationId: String? = {
+            if available.contains(target) {
+                return "explore-letter-\(target)"
+            } else if let next = available.sorted().first(where: { $0 > target }) {
+                return "explore-letter-\(next)"
+            } else if let last = available.sorted().last {
+                return "explore-letter-\(last)"
             }
-        } else if let next = available.sorted().first(where: { $0 > target }) {
-            withAnimation(.easeInOut(duration: 0.25)) {
-                scrollProxy.scrollTo("explore-letter-\(next)", anchor: .top)
+            return nil
+        }()
+        
+        guard let id = destinationId else { return }
+        
+        if animated {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                scrollProxy.scrollTo(id, anchor: .top)
             }
-        } else if let last = available.sorted().last {
-            withAnimation(.easeInOut(duration: 0.25)) {
-                scrollProxy.scrollTo("explore-letter-\(last)", anchor: .top)
-            }
+        } else {
+            scrollProxy.scrollTo(id, anchor: .top)
         }
     }
     
