@@ -28,11 +28,12 @@ public struct HomeView: View {
     public var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 24) {
-                // Hero Headline: "Make tonight something special."
-                Text("Make tonight\nsomething special.")
-                    .font(MealioFont.editorialHero(size: 34))
+                // Hero Headline: One-liner
+                Text("What are you cooking tonight?")
+                    .font(MealioFont.editorialHero(size: 26))
                     .foregroundColor(MealioColors.textPrimary)
-                    .lineSpacing(4)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
                 

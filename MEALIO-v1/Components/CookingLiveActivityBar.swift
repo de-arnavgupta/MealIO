@@ -75,16 +75,13 @@ public struct CookingLiveActivityBar: View {
                             .symbolEffect(.bounce, value: session.isTimerRunning)
                         
                         Text(session.timerFormatted)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 12, weight: .semibold))
                             .monospacedDigit()
                     }
                     .foregroundColor(session.isTimerRunning ? .white : MealioColors.terracotta)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(session.isTimerRunning ? MealioColors.terracotta : MealioColors.terracottaLight)
-                    )
+                    .liquidGlassCapsule(tint: session.isTimerRunning ? MealioColors.terracotta : nil, isSelected: session.isTimerRunning)
                 }
                 .buttonStyle(LiquidGlassPressStyle())
             }
@@ -95,17 +92,22 @@ public struct CookingLiveActivityBar: View {
                 onDismiss()
             }) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(MealioColors.textTertiary)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(MealioColors.textSecondary)
                     .frame(width: 26, height: 26)
-                    .background(Color.black.opacity(0.05))
+                    .background(.ultraThinMaterial)
+                    .background(Color.white.opacity(0.20))
                     .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.65), lineWidth: 0.8)
+                    )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(LiquidGlassPressStyle())
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .liquidGlass(cornerRadius: 24)
-        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+        .padding(.vertical, 7)
+        .liquidGlass(cornerRadius: 28, isClear: true)
+        .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 3)
     }
 }
