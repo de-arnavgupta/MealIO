@@ -32,6 +32,7 @@ public class RecipeStore: ObservableObject {
     @Published public var selectedCuisineFilter: String? = nil
     @Published public var maxTimeFilter: Int? = nil
     @Published public var effortFilter: String? = nil
+    @Published public var dietaryFilter: String? = nil
     @Published public var currentServings: Int = 2
     @Published public var groceryDestination: String = "This week's table"
     
@@ -240,10 +241,20 @@ public class RecipeStore: ObservableObject {
             break
         case .quickAndLovely:
             list = list.filter { $0.totalTimeMinutes <= 25 }
+        case .vegetarian:
+            list = list.filter { $0.dietaryType == "Vegetarian" || $0.dietaryType == "Vegan" }
+        case .highProtein:
+            list = list.filter {
+                $0.dietaryType == "Non-Veg" ||
+                $0.ingredients.contains { ing in
+                    let lower = ing.name.lowercased()
+                    return lower.contains("egg") || lower.contains("salmon") || lower.contains("chicken") ||
+                           lower.contains("lentil") || lower.contains("scallop") || lower.contains("beef") ||
+                           lower.contains("tofu") || lower.contains("beans")
+                }
+            }
         case .seasonal:
             list = list.filter { $0.categoryBadge.contains("SEASONAL") || $0.categoryBadge.contains("HARVEST") || $0.cuisine == "Mediterranean" }
-        case .italian, .french, .japanese, .mexican, .indian, .mediterranean, .thai, .spanish, .american, .middleEastern:
-            list = list.filter { $0.cuisine.lowercased() == selectedCategory.rawValue.lowercased() }
         }
         
         if let cuisine = selectedCuisineFilter, !cuisine.isEmpty {
@@ -256,6 +267,21 @@ public class RecipeStore: ObservableObject {
         
         if let effort = effortFilter, !effort.isEmpty {
             list = list.filter { $0.effort.lowercased() == effort.lowercased() }
+        }
+        
+        if let dietary = dietaryFilter, !dietary.isEmpty {
+            switch dietary {
+            case "Vegetarian":
+                list = list.filter { $0.dietaryType == "Vegetarian" || $0.dietaryType == "Vegan" }
+            case "Vegan":
+                list = list.filter { $0.dietaryType == "Vegan" }
+            case "Non-Veg":
+                list = list.filter { $0.dietaryType == "Non-Veg" }
+            case "Halal":
+                list = list.filter { $0.isHalal }
+            default:
+                break
+            }
         }
         
         return list
@@ -303,6 +329,12 @@ public class RecipeStore: ObservableObject {
         selectedCuisineFilter = nil
         maxTimeFilter = nil
         effortFilter = nil
+        dietaryFilter = nil
+    }
+    
+    public func addCustomRecipe(_ recipe: Recipe) {
+        allRecipes.insert(recipe, at: 0)
+        savedRecipeIds.insert(recipe.id)
     }
     
     // MARK: - Live Activity Cooking Session

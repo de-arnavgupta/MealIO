@@ -2,18 +2,10 @@ import Foundation
 
 public enum RecipeCategory: String, CaseIterable, Identifiable, Codable {
     case forYou = "For you"
-    case quickAndLovely = "Quick & lovely"
+    case quickAndLovely = "Quick & easy"
+    case vegetarian = "Vegetarian"
+    case highProtein = "High protein"
     case seasonal = "Seasonal"
-    case italian = "Italian"
-    case french = "French"
-    case japanese = "Japanese"
-    case mexican = "Mexican"
-    case indian = "Indian"
-    case mediterranean = "Mediterranean"
-    case thai = "Thai"
-    case spanish = "Spanish"
-    case american = "American"
-    case middleEastern = "Middle Eastern"
     
     public var id: String { rawValue }
 }
@@ -53,6 +45,38 @@ public struct Recipe: Identifiable, Hashable, Codable {
     
     // Collaborative indicator
     public var activeSocialUser: String?
+    
+    // Dynamic Dietary Classification
+    public var dietaryType: String {
+        let meatWords = ["beef", "pork", "prosciutto", "pancetta", "bacon", "chicken", "scallop", "salmon", "shrimp", "duck", "lamb", "veal", "anchov", "chorizo", "steak", "tuna", "crab", "lobster", "meat", "fish", "clam"]
+        let dairyWords = ["butter", "cream", "cheese", "parmesan", "pecorino", "ricotta", "milk", "egg", "yogurt", "mascarpone", "ghee", "honey", "mozzarella"]
+        
+        let ingredientNames = ingredients.map { $0.name.lowercased() }
+        let titleLower = title.lowercased()
+        let descLower = description.lowercased()
+        
+        let containsMeat = ingredientNames.contains { name in meatWords.contains { name.contains($0) } } ||
+                           meatWords.contains { titleLower.contains($0) || descLower.contains($0) }
+        
+        if containsMeat {
+            return "Non-Veg"
+        }
+        
+        let containsDairy = ingredientNames.contains { name in dairyWords.contains { name.contains($0) } }
+        if containsDairy {
+            return "Vegetarian"
+        }
+        
+        return "Vegan"
+    }
+    
+    public var isHalal: Bool {
+        let nonHalal = ["pork", "prosciutto", "pancetta", "bacon", "wine", "alcohol", "beer", "rum", "chorizo"]
+        let ingredientNames = ingredients.map { $0.name.lowercased() }
+        let titleLower = title.lowercased()
+        return !ingredientNames.contains { name in nonHalal.contains { name.contains($0) } } &&
+               !nonHalal.contains { titleLower.contains($0) }
+    }
     
     public init(
         id: UUID = UUID(),

@@ -69,7 +69,6 @@ public class ImagePaletteExtractor: ObservableObject {
             
             let palette = sampledImage.flatMap { Self.extract(from: $0) } ?? .fallback
             
-            // Publish exclusively on the MainActor
             await MainActor.run {
                 ImagePaletteExtractor.shared.paletteCache[source] = palette
                 ImagePaletteExtractor.shared.inFlightSources.remove(source)
@@ -83,12 +82,10 @@ public class ImagePaletteExtractor: ObservableObject {
         let height = cgImage.height
         guard width > 0 && height > 0 else { return .fallback }
         
-        // Sample bottom 30% of the image where it meets the card container
         let sampleHeight = max(1, Int(CGFloat(height) * 0.30))
         let sampleRect = CGRect(x: 0, y: height - sampleHeight, width: width, height: sampleHeight)
         guard let cropped = cgImage.cropping(to: sampleRect) else { return .fallback }
         
-        // Downsample directly to 1x1 pixel using CoreGraphics to calculate exact average color
         var pixel: [UInt8] = [0, 0, 0, 0]
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
@@ -119,12 +116,10 @@ public class ImagePaletteExtractor: ObservableObject {
         var a: CGFloat = 0
         color.getHue(&h, saturation: &s, brightness: &br, alpha: &a)
         
-        // 1. Soft pastel background (high brightness, low-medium saturation, keeping the image's exact hue)
         let bgSaturation = min(max(s * 0.35, 0.12), 0.22)
         let bgBrightness: CGFloat = 0.93
         let bgUIColor = UIColor(hue: h, saturation: bgSaturation, brightness: bgBrightness, alpha: 1.0)
         
-        // 2. High-contrast, rich deep text color (same hue, deep brightness, high saturation)
         let textSaturation = min(max(s * 1.3, 0.55), 0.85)
         let textBrightness: CGFloat = 0.40
         let textUIColor = UIColor(hue: h, saturation: textSaturation, brightness: textBrightness, alpha: 1.0)

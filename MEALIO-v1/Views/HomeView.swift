@@ -6,6 +6,7 @@ public class HomeViewModel: ObservableObject {
     @Published public var showingFilterSheet: Bool = false
     @Published public var showingProfileSheet: Bool = false
     @Published public var showingWisdomSheet: Bool = false
+    @Published public var showingSavedSheet: Bool = false
     @Published public var activeCollectionTitle: String? = nil
     @Published public var activeCollectionSubtitle: String = ""
     @Published public var activeCollectionRecipes: [Recipe] = []
@@ -28,14 +29,40 @@ public struct HomeView: View {
     public var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 24) {
-                // Hero Headline: One-liner
-                Text("What are you cooking tonight?")
-                    .font(MealioFont.editorialHero(size: 26))
-                    .foregroundColor(MealioColors.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
+                // Hero Header: Catchy One-liner + Liquid Glass Saved Bookmark Button
+                HStack(alignment: .center) {
+                    Text("Cook something unforgettable.")
+                        .font(MealioFont.editorialHero(size: 24))
+                        .foregroundColor(MealioColors.textPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.80)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        HapticFeedback.light()
+                        vm.showingSavedSheet = true
+                    }) {
+                        HStack(spacing: 5) {
+                            Image(systemName: store.savedRecipeIds.isEmpty ? "bookmark" : "bookmark.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(store.savedRecipeIds.isEmpty ? MealioColors.textSecondary : MealioColors.terracotta)
+                                .symbolEffect(.bounce, value: store.savedRecipeIds.count)
+                            
+                            if !store.savedRecipeIds.isEmpty {
+                                Text("\(store.savedRecipeIds.count)")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(MealioColors.terracotta)
+                            }
+                        }
+                        .padding(.horizontal, store.savedRecipeIds.isEmpty ? 11 : 13)
+                        .padding(.vertical, 7)
+                        .liquidGlassCapsule(tint: store.savedRecipeIds.isEmpty ? nil : MealioColors.terracottaLight.opacity(0.4), isSelected: !store.savedRecipeIds.isEmpty)
+                    }
+                    .buttonStyle(LiquidGlassPressStyle())
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
                 
                 // Search & Filter Bar
                 searchBar
@@ -46,11 +73,11 @@ public struct HomeView: View {
                     searchResultsSection
                         .padding(.horizontal, 20)
                 } else {
-                    // Category Filter Pills: "For you", "Quick & lovely", "Seasonal" + Cuisines
+                    // Category Filter Pills: "For you", "Quick & easy", "Vegetarian", "High protein", "Seasonal"
                     categoryPills
                     
                     // If a specific category or filter is active, show filtered results
-                    if store.selectedCategory != .forYou || store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil {
+                    if store.selectedCategory != .forYou || store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil || store.dietaryFilter != nil {
                         filteredResultsSection
                             .padding(.horizontal, 20)
                     } else {
@@ -85,14 +112,20 @@ public struct HomeView: View {
         }
         .sheet(isPresented: $vm.showingFilterSheet) {
             FilterSheetView(store: store)
-                .presentationDetents([.fraction(0.52), .large])
+                .presentationDetents([.fraction(0.65), .large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(32)
-                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.52)))
+                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.65)))
         }
         .sheet(isPresented: $vm.showingWisdomSheet) {
             KitchenWisdomSheet(activeWisdom: store.activeWisdom)
                 .presentationDetents([.fraction(0.72), .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(32)
+        }
+        .sheet(isPresented: $vm.showingSavedSheet) {
+            SavedRecipesView(store: store, selectedRecipeForNavigation: $selectedRecipeForNavigation)
+                .presentationDetents([.fraction(0.88), .large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(32)
         }
@@ -144,22 +177,17 @@ public struct HomeView: View {
                 HapticFeedback.light()
                 vm.showingFilterSheet = true
             }) {
+                let hasActiveFilter = store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil || store.dietaryFilter != nil
                 ZStack {
                     Circle()
-                        .fill(
-                            (store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil) ?
-                            MealioColors.terracotta : Color.white.opacity(0.65)
-                        )
+                        .fill(hasActiveFilter ? MealioColors.terracotta : Color.white.opacity(0.65))
                         .frame(width: 32, height: 32)
                     
                     Image(systemName: "slider.horizontal.3")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(
-                            (store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil) ?
-                            .white : MealioColors.textPrimary
-                        )
+                        .foregroundColor(hasActiveFilter ? .white : MealioColors.textPrimary)
                     
-                    if store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil {
+                    if hasActiveFilter {
                         Circle()
                             .fill(Color.white)
                             .frame(width: 6, height: 6)

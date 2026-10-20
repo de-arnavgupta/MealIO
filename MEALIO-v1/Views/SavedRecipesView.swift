@@ -3,6 +3,7 @@ import SwiftUI
 public struct SavedRecipesView: View {
     @ObservedObject var store: RecipeStore
     @Binding var selectedRecipeForNavigation: Recipe?
+    @Environment(\.dismiss) private var dismiss
     
     public init(store: RecipeStore, selectedRecipeForNavigation: Binding<Recipe?>) {
         self.store = store
@@ -14,18 +15,31 @@ public struct SavedRecipesView: View {
         
         VStack(spacing: 0) {
             // Header
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Saved recipes.")
-                    .font(MealioFont.editorialHero(size: 32))
-                    .foregroundColor(MealioColors.textPrimary)
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Saved recipes.")
+                        .font(MealioFont.editorialHero(size: 30))
+                        .foregroundColor(MealioColors.textPrimary)
+                    
+                    Text("\(saved.count) recipes bookmarked for your table.")
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(MealioColors.textSecondary)
+                }
                 
-                Text("\(saved.count) recipes bookmarked for your table.")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(MealioColors.textSecondary)
+                Spacer()
+                
+                Button(action: {
+                    HapticFeedback.light()
+                    dismiss()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 26))
+                        .foregroundColor(MealioColors.textTertiary)
+                }
+                .buttonStyle(LiquidGlassPressStyle())
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20)
-            .padding(.top, 16)
+            .padding(.top, 20)
             .padding(.bottom, 12)
             
             if saved.isEmpty {
@@ -51,6 +65,7 @@ public struct SavedRecipesView: View {
                         Button(action: {
                             HapticFeedback.light()
                             selectedRecipeForNavigation = recipe
+                            dismiss()
                         }) {
                             HStack(spacing: 14) {
                                 MealioImageView(recipe.cardImageName)

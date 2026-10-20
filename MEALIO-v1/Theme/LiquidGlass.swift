@@ -237,7 +237,115 @@ extension View {
         self.modifier(LiquidGlassCapsuleModifier(tint: tint, isSelected: isSelected))
     }
     
+    public func liquidGlassCircle(tint: Color? = nil, isClear: Bool = false, isSelected: Bool = false) -> some View {
+        self.modifier(LiquidGlassCircleModifier(tint: tint, isClear: isClear, isSelected: isSelected))
+    }
+    
     public func liquidPressable() -> some View {
         self.buttonStyle(LiquidGlassPressStyle())
+    }
+}
+
+public struct LiquidGlassCircleModifier: ViewModifier {
+    public var tint: Color?
+    public var isClear: Bool
+    public var isSelected: Bool
+    
+    public init(tint: Color? = nil, isClear: Bool = false, isSelected: Bool = false) {
+        self.tint = tint
+        self.isClear = isClear
+        self.isSelected = isSelected
+    }
+    
+    public func body(content: Content) -> some View {
+        content
+            .background {
+                ZStack {
+                    if isSelected, let tint = tint {
+                        Circle()
+                            .fill(tint)
+                        
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.35),
+                                        Color.white.opacity(0.08),
+                                        Color.clear,
+                                        Color.black.opacity(0.06)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    } else {
+                        Circle()
+                            .fill(.ultraThinMaterial)
+                        
+                        Circle()
+                            .fill(Color.white.opacity(isClear ? 0.20 : 0.72))
+                        
+                        if let tint = tint {
+                            Circle()
+                                .fill(tint.opacity(isClear ? 0.08 : 0.12))
+                        }
+                        
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(isClear ? 0.35 : 0.45),
+                                        Color.white.opacity(isClear ? 0.10 : 0.15),
+                                        Color.clear
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                }
+            }
+            .overlay {
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: isSelected ? [
+                                Color.white.opacity(0.75),
+                                Color.white.opacity(0.25)
+                            ] : [
+                                Color.white.opacity(0.95),
+                                Color.white.opacity(0.50),
+                                Color.white.opacity(0.18),
+                                Color.white.opacity(0.60)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.85
+                    )
+            }
+            .overlay {
+                if !isSelected {
+                    Circle()
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.50),
+                                    Color.clear
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 0.5
+                        )
+                        .padding(0.7)
+                }
+            }
+            .shadow(
+                color: isSelected ? (tint ?? MealioColors.terracotta).opacity(0.30) : Color(hex: 0x4A3B32, alpha: 0.04),
+                radius: isSelected ? 8 : 6,
+                x: 0,
+                y: isSelected ? 3 : 2
+            )
     }
 }

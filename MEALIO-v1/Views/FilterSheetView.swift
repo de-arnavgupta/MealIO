@@ -13,6 +13,7 @@ public struct FilterSheetView: View {
         ("Over 60 min", 60)
     ]
     let effortOptions = ["All", "Easy", "A little finesse", "Worth the wait"]
+    let dietaryOptions = ["All", "Vegetarian", "Non-Veg", "Vegan", "Halal"]
     
     public var body: some View {
         VStack(spacing: 0) {
@@ -32,112 +33,143 @@ public struct FilterSheetView: View {
                 Spacer()
                 
                 Button(action: {
-                    store.resetFilters()
+                    HapticFeedback.light()
+                    withAnimation(.spring(response: 0.28, dampingFraction: 0.76)) {
+                        store.resetFilters()
+                    }
                 }) {
                     Text("Reset")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(MealioColors.terracotta)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(LiquidGlassPressStyle())
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 16)
             
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 24) {
-                    // Cuisines Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("CUISINE")
+                VStack(alignment: .leading, spacing: 22) {
+                    // Dietary & Cooking Type Section
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("DIETARY & COOKING TYPE")
                             .font(MealioFont.eyebrow(size: 11))
                             .tracking(1.0)
                             .foregroundColor(MealioColors.textTertiary)
                         
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
-                            ForEach(cuisines, id: \.self) { cuisine in
-                                let isSelected = (cuisine == "All" && store.selectedCuisineFilter == nil) || (store.selectedCuisineFilter == cuisine)
-                                Button(action: {
-                                    store.selectedCuisineFilter = (cuisine == "All" ? nil : cuisine)
-                                }) {
-                                    Text(cuisine)
-                                        .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
-                                        .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 8)
-                                        .frame(maxWidth: .infinity)
-                                        .background(
-                                            Capsule()
-                                                .fill(isSelected ? MealioColors.terracotta : MealioColors.cardLight)
-                                                .overlay(
-                                                    Capsule()
-                                                        .stroke(isSelected ? MealioColors.terracotta : MealioColors.divider, lineWidth: 1)
-                                                )
-                                        )
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(dietaryOptions, id: \.self) { diet in
+                                    let isSelected = (diet == "All" && store.dietaryFilter == nil) || (store.dietaryFilter == diet)
+                                    Button(action: {
+                                        HapticFeedback.light()
+                                        withAnimation(.spring(response: 0.28, dampingFraction: 0.76)) {
+                                            store.dietaryFilter = (diet == "All" ? nil : diet)
+                                        }
+                                    }) {
+                                        Text(diet)
+                                            .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                                            .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
+                                            .lineLimit(1)
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 8)
+                                            .liquidGlassCapsule(tint: isSelected ? MealioColors.terracotta : nil, isSelected: isSelected)
+                                    }
+                                    .buttonStyle(LiquidGlassPressStyle())
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                     }
                     
-                    // Cooking Time Section
-                    VStack(alignment: .leading, spacing: 12) {
+                    // Cooking Time Section (Fixed: Theme Terracotta & Strict 1-Line)
+                    VStack(alignment: .leading, spacing: 10) {
                         Text("COOKING TIME")
                             .font(MealioFont.eyebrow(size: 11))
                             .tracking(1.0)
                             .foregroundColor(MealioColors.textTertiary)
                         
-                        HStack(spacing: 8) {
-                            ForEach(timeOptions, id: \.label) { opt in
-                                let isSelected = store.maxTimeFilter == opt.minutes
-                                Button(action: {
-                                    store.maxTimeFilter = opt.minutes
-                                }) {
-                                    Text(opt.label)
-                                        .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
-                                        .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            Capsule()
-                                                .fill(isSelected ? MealioColors.textPrimary : MealioColors.cardLight)
-                                                .overlay(
-                                                    Capsule()
-                                                        .stroke(isSelected ? MealioColors.textPrimary : MealioColors.divider, lineWidth: 1)
-                                                )
-                                        )
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(timeOptions, id: \.label) { opt in
+                                    let isSelected = store.maxTimeFilter == opt.minutes
+                                    Button(action: {
+                                        HapticFeedback.light()
+                                        withAnimation(.spring(response: 0.28, dampingFraction: 0.76)) {
+                                            store.maxTimeFilter = opt.minutes
+                                        }
+                                    }) {
+                                        Text(opt.label)
+                                            .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                                            .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
+                                            .lineLimit(1)
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 8)
+                                            .liquidGlassCapsule(tint: isSelected ? MealioColors.terracotta : nil, isSelected: isSelected)
+                                    }
+                                    .buttonStyle(LiquidGlassPressStyle())
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                     }
                     
-                    // Effort Level Section
-                    VStack(alignment: .leading, spacing: 12) {
+                    // Effort Level Section (Fixed: Strict 1-Line)
+                    VStack(alignment: .leading, spacing: 10) {
                         Text("EFFORT LEVEL")
                             .font(MealioFont.eyebrow(size: 11))
                             .tracking(1.0)
                             .foregroundColor(MealioColors.textTertiary)
                         
-                        HStack(spacing: 8) {
-                            ForEach(effortOptions, id: \.self) { effort in
-                                let isSelected = (effort == "All" && store.effortFilter == nil) || (store.effortFilter == effort)
-                                Button(action: {
-                                    store.effortFilter = (effort == "All" ? nil : effort)
-                                }) {
-                                    Text(effort)
-                                        .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
-                                        .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
-                                        .padding(.horizontal, 14)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            Capsule()
-                                                .fill(isSelected ? MealioColors.terracotta : MealioColors.cardLight)
-                                                .overlay(
-                                                    Capsule()
-                                                        .stroke(isSelected ? MealioColors.terracotta : MealioColors.divider, lineWidth: 1)
-                                                )
-                                        )
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(effortOptions, id: \.self) { effort in
+                                    let isSelected = (effort == "All" && store.effortFilter == nil) || (store.effortFilter == effort)
+                                    Button(action: {
+                                        HapticFeedback.light()
+                                        withAnimation(.spring(response: 0.28, dampingFraction: 0.76)) {
+                                            store.effortFilter = (effort == "All" ? nil : effort)
+                                        }
+                                    }) {
+                                        Text(effort)
+                                            .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                                            .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
+                                            .lineLimit(1)
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 8)
+                                            .liquidGlassCapsule(tint: isSelected ? MealioColors.terracotta : nil, isSelected: isSelected)
+                                    }
+                                    .buttonStyle(LiquidGlassPressStyle())
                                 }
-                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                    
+                    // Cuisines Section
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("CUISINE")
+                            .font(MealioFont.eyebrow(size: 11))
+                            .tracking(1.0)
+                            .foregroundColor(MealioColors.textTertiary)
+                        
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 95), spacing: 8)], spacing: 8) {
+                            ForEach(cuisines, id: \.self) { cuisine in
+                                let isSelected = (cuisine == "All" && store.selectedCuisineFilter == nil) || (store.selectedCuisineFilter == cuisine)
+                                Button(action: {
+                                    HapticFeedback.light()
+                                    withAnimation(.spring(response: 0.28, dampingFraction: 0.76)) {
+                                        store.selectedCuisineFilter = (cuisine == "All" ? nil : cuisine)
+                                    }
+                                }) {
+                                    Text(cuisine)
+                                        .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                                        .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
+                                        .lineLimit(1)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 8)
+                                        .frame(maxWidth: .infinity)
+                                        .liquidGlassCapsule(tint: isSelected ? MealioColors.terracotta : nil, isSelected: isSelected)
+                                }
+                                .buttonStyle(LiquidGlassPressStyle())
                             }
                         }
                     }
@@ -147,6 +179,7 @@ public struct FilterSheetView: View {
             
             // Apply CTA Button
             Button(action: {
+                HapticFeedback.light()
                 dismiss()
             }) {
                 Text("Show \(store.filteredRecipes.count) recipes")
@@ -156,10 +189,11 @@ public struct FilterSheetView: View {
                     .padding(.vertical, 16)
                     .background(MealioColors.terracotta)
                     .cornerRadius(30)
+                    .shadow(color: MealioColors.terracotta.opacity(0.35), radius: 8, x: 0, y: 3)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(LiquidGlassPressStyle())
             .padding(.horizontal, 24)
-            .padding(.top, 16)
+            .padding(.top, 14)
             .padding(.bottom, 20)
         }
         .background(MealioColors.background.ignoresSafeArea())

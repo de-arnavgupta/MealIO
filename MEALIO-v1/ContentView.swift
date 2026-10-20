@@ -6,6 +6,7 @@ public class ContentViewModel: ObservableObject {
     @Published public var selectedTab: MainTab = .discover
     @Published public var selectedRecipeForNavigation: Recipe?
     @Published public var activeCookingPresented: Bool = false
+    @Published public var showingAddRecipeSheet: Bool = false
     
     public init() {}
 }
@@ -20,11 +21,6 @@ struct ContentView: View {
                     switch vm.selectedTab {
                     case .discover:
                         HomeView(
-                            store: vm.store,
-                            selectedRecipeForNavigation: $vm.selectedRecipeForNavigation
-                        )
-                    case .saved:
-                        SavedRecipesView(
                             store: vm.store,
                             selectedRecipeForNavigation: $vm.selectedRecipeForNavigation
                         )
@@ -63,7 +59,10 @@ struct ContentView: View {
                     
                     CustomTabBar(
                         selectedTab: $vm.selectedTab,
-                        groceryCount: vm.store.groceryItems.count
+                        groceryCount: vm.store.groceryItems.count,
+                        onAddRecipe: {
+                            vm.showingAddRecipeSheet = true
+                        }
                     )
                 }
                 .animation(.spring(response: 0.38, dampingFraction: 0.72), value: vm.store.activeCookingSession != nil)
@@ -76,6 +75,14 @@ struct ContentView: View {
                 if let session = vm.store.activeCookingSession {
                     HandsFreeCookingView(session: session)
                 }
+            }
+            .sheet(isPresented: $vm.showingAddRecipeSheet) {
+                AddRecipeSheet(store: vm.store) { newRecipe in
+                    vm.selectedRecipeForNavigation = newRecipe
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(32)
             }
         }
     }
