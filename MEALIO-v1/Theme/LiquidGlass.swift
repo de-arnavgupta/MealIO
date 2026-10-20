@@ -1,9 +1,9 @@
 import SwiftUI
 import UIKit
 
-// MARK: - Apple Human Interface Guidelines: Liquid Glass 2.0 System
-// WhatsApp on iOS inspired translucent, physically reactive material layer
-// with real-time optical blur, almost transparent optical clarity, and fluid liquid meniscus texture.
+// MARK: - Apple Human Interface Guidelines: Liquid Glass System (WhatsApp iOS Style)
+// Physically reactive translucent material layer with real-time optical blur,
+// ultra-sheer optical clarity, and fluid liquid meniscus texture.
 
 public struct LiquidGlassModifier: ViewModifier {
     public var cornerRadius: CGFloat
@@ -24,13 +24,13 @@ public struct LiquidGlassModifier: ViewModifier {
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                         .fill(.ultraThinMaterial)
                     
-                    // Luminous gossamer foundation: ultra-clear liquid transparency like WhatsApp iOS
+                    // Ultra-sheer liquid gossamer wash (WhatsApp iOS style: almost 100% transparent optical clarity)
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(Color.white.opacity(isClear ? 0.05 : 0.14))
+                        .fill(Color.white.opacity(isClear ? 0.02 : 0.05))
                     
                     if let tint = tint {
                         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(tint.opacity(isClear ? 0.05 : 0.08))
+                            .fill(tint.opacity(isClear ? 0.04 : 0.06))
                     }
                     
                     // Living ambient specular sheen: light refraction across curved liquid surface
@@ -38,10 +38,9 @@ public struct LiquidGlassModifier: ViewModifier {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(isClear ? 0.28 : 0.35),
-                                    Color.white.opacity(isClear ? 0.04 : 0.08),
-                                    Color.clear,
-                                    Color.white.opacity(0.04)
+                                    Color.white.opacity(isClear ? 0.16 : 0.24),
+                                    Color.white.opacity(0.02),
+                                    Color.clear
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -56,15 +55,15 @@ public struct LiquidGlassModifier: ViewModifier {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.85),
-                                Color.white.opacity(0.35),
-                                Color.white.opacity(0.12),
-                                Color.white.opacity(0.45)
+                                Color.white.opacity(0.70),
+                                Color.white.opacity(0.20),
+                                Color.white.opacity(0.06),
+                                Color.white.opacity(0.30)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 0.75
+                        lineWidth: 0.70
                     )
             }
             .overlay {
@@ -73,17 +72,17 @@ public struct LiquidGlassModifier: ViewModifier {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.40),
+                                Color.white.opacity(0.25),
                                 Color.clear
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         ),
-                        lineWidth: 0.45
+                        lineWidth: 0.40
                     )
                     .padding(0.6)
             }
-            .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 3)
+            .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 3)
     }
 }
 
@@ -109,10 +108,10 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color.white.opacity(0.32),
-                                        Color.white.opacity(0.06),
+                                        Color.white.opacity(0.30),
+                                        Color.white.opacity(0.05),
                                         Color.clear,
-                                        Color.black.opacity(0.05)
+                                        Color.black.opacity(0.04)
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
@@ -123,11 +122,11 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
                             .fill(.ultraThinMaterial)
                         
                         Capsule(style: .continuous)
-                            .fill(Color.white.opacity(0.14))
+                            .fill(Color.white.opacity(0.05))
                         
                         if let tint = tint {
                             Capsule(style: .continuous)
-                                .fill(tint.opacity(0.08))
+                                .fill(tint.opacity(0.06))
                         }
                         
                         // Ambient upper light sheen (liquid glass texture)
@@ -135,8 +134,8 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color.white.opacity(0.32),
-                                        Color.white.opacity(0.06),
+                                        Color.white.opacity(0.20),
+                                        Color.white.opacity(0.02),
                                         Color.clear
                                     ],
                                     startPoint: .topLeading,
@@ -154,15 +153,15 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
                                 Color.white.opacity(0.65),
                                 Color.white.opacity(0.25)
                             ] : [
-                                Color.white.opacity(0.85),
-                                Color.white.opacity(0.35),
-                                Color.white.opacity(0.12),
-                                Color.white.opacity(0.45)
+                                Color.white.opacity(0.70),
+                                Color.white.opacity(0.20),
+                                Color.white.opacity(0.06),
+                                Color.white.opacity(0.30)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 0.75
+                        lineWidth: 0.70
                     )
             }
             .overlay {
@@ -171,19 +170,19 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.40),
+                                    Color.white.opacity(0.25),
                                     Color.clear
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
                             ),
-                            lineWidth: 0.45
+                            lineWidth: 0.40
                         )
                         .padding(0.6)
                 }
             }
             .shadow(
-                color: isSelected ? (tint ?? MealioColors.terracotta).opacity(0.24) : Color.black.opacity(0.03),
+                color: isSelected ? (tint ?? MealioColors.terracotta).opacity(0.22) : Color.black.opacity(0.03),
                 radius: isSelected ? 6 : 4,
                 x: 0,
                 y: 2
@@ -284,19 +283,19 @@ public struct LiquidGlassCircleModifier: ViewModifier {
                             .fill(.ultraThinMaterial)
                         
                         Circle()
-                            .fill(Color.white.opacity(isClear ? 0.05 : 0.14))
+                            .fill(Color.white.opacity(isClear ? 0.02 : 0.05))
                         
                         if let tint = tint {
                             Circle()
-                                .fill(tint.opacity(isClear ? 0.05 : 0.08))
+                                .fill(tint.opacity(isClear ? 0.04 : 0.06))
                         }
                         
                         Circle()
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color.white.opacity(isClear ? 0.28 : 0.35),
-                                        Color.white.opacity(isClear ? 0.04 : 0.08),
+                                        Color.white.opacity(isClear ? 0.16 : 0.24),
+                                        Color.white.opacity(0.02),
                                         Color.clear
                                     ],
                                     startPoint: .topLeading,
@@ -314,15 +313,15 @@ public struct LiquidGlassCircleModifier: ViewModifier {
                                 Color.white.opacity(0.70),
                                 Color.white.opacity(0.25)
                             ] : [
-                                Color.white.opacity(0.85),
-                                Color.white.opacity(0.35),
-                                Color.white.opacity(0.12),
-                                Color.white.opacity(0.45)
+                                Color.white.opacity(0.70),
+                                Color.white.opacity(0.20),
+                                Color.white.opacity(0.06),
+                                Color.white.opacity(0.30)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 0.75
+                        lineWidth: 0.70
                     )
             }
             .overlay {
@@ -331,13 +330,13 @@ public struct LiquidGlassCircleModifier: ViewModifier {
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.40),
+                                    Color.white.opacity(0.25),
                                     Color.clear
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
                             ),
-                            lineWidth: 0.45
+                            lineWidth: 0.40
                         )
                         .padding(0.6)
                 }

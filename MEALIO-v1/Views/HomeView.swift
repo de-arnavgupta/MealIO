@@ -49,6 +49,7 @@ public class HomeViewModel: ObservableObject {
     @Published public var selectedExploreCuisineTab: String = "All"
     @Published public var selectedExploreLetterTab: String = "All"
     @Published public var visibleRecipesCount: Int = 16
+    @Published public var activeScrubLetter: String? = nil
     
     public init() {}
 }
@@ -64,83 +65,118 @@ public struct HomeView: View {
     }
     
     public var body: some View {
-        ScrollView(showsIndicators: false) {
-            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
-                // Scroll tracker
-                GeometryReader { proxy in
-                    let minY = proxy.frame(in: .named("homeScrollSpace")).minY
-                    Color.clear
-                        .preference(key: HomeScrollOffsetKey.self, value: minY)
-                }
-                .frame(height: 0)
-                
-                // Hero Headline
-                Text("Cook something unforgettable.")
-                    .font(MealioFont.editorialHero(size: 26))
-                    .foregroundColor(MealioColors.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.80)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 14)
-                    .padding(.bottom, 8)
-                
-                // Pinned Section: Sticky Search Bar + Save in One Line
-                Section {
-                    VStack(alignment: .leading, spacing: 24) {
-                        // Live Search Results (if user is searching)
-                        if !store.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            searchResultsSection
-                                .padding(.horizontal, 20)
-                        } else {
-                            // Category Filter Pills: "For you", "Quick & easy", "Vegetarian", "High protein", "Seasonal"
-                            categoryPills
-                            
-                            // If a specific category or filter is active, show filtered results
-                            if store.selectedCategory != .forYou || store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil || store.dietaryFilter != nil {
-                                filteredResultsSection
-                                    .padding(.horizontal, 20)
-                            } else {
-                                // Section 1: "The evening edit" (Dynamic Carousel with daily rotating luxury dishes)
-                                eveningEditSection
-                                
-                                // Section 2: "Last visited" (Horizontal Shelf)
-                                lastVisitedSection
-                                
-                                // Section 3: "Short on time. Not taste." (Dynamic fast weeknight recipes)
-                                shortOnTimeSection
-                                
-                                // Section 4: "Cuisines of the World" (10 World Cuisines Shelf)
-                                cuisinesOfTheWorldSection
-                                
-                                // Section 5: "Explore All Recipes" (Uniform Grid across all 200 recipes)
-                                exploreAllRecipesSection
-                                    .padding(.horizontal, 20)
-                            }
+        ScrollViewReader { scrollProxy in
+            ZStack {
+                ScrollView(showsIndicators: false) {
+                    LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                        // Scroll tracker
+                        GeometryReader { proxy in
+                            let minY = proxy.frame(in: .named("homeScrollSpace")).minY
+                            Color.clear
+                                .preference(key: HomeScrollOffsetKey.self, value: minY)
                         }
+                        .frame(height: 0)
                         
-                        // Bottom spacing for tab bar
-                        Spacer()
-                            .frame(height: 80)
+                        // Hero Headline
+                        Text("Cook something unforgettable.")
+                            .font(MealioFont.editorialHero(size: 26))
+                            .foregroundColor(MealioColors.textPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.80)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 14)
+                            .padding(.bottom, 8)
+                        
+                        // Pinned Section: Sticky Search Bar + Save in One Line
+                        Section {
+                            VStack(alignment: .leading, spacing: 24) {
+                                // Live Search Results (if user is searching)
+                                if !store.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    searchResultsSection
+                                        .padding(.horizontal, 20)
+                                } else {
+                                    // Category Filter Pills: "For you", "Quick & easy", "Vegetarian", "High protein", "Seasonal"
+                                    categoryPills
+                                    
+                                    // If a specific category or filter is active, show filtered results
+                                    if store.selectedCategory != .forYou || store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil || store.dietaryFilter != nil {
+                                        filteredResultsSection
+                                            .padding(.horizontal, 20)
+                                    } else {
+                                        // Section 1: "The evening edit" (Dynamic Carousel with daily rotating luxury dishes)
+                                        eveningEditSection
+                                        
+                                        // Section 2: "Last visited" (Horizontal Shelf)
+                                        lastVisitedSection
+                                        
+                                        // Section 3: "Short on time. Not taste." (Dynamic fast weeknight recipes)
+                                        shortOnTimeSection
+                                        
+                                        // Section 4: "Cuisines of the World" (10 World Cuisines Shelf)
+                                        cuisinesOfTheWorldSection
+                                        
+                                        // Section 5: "Explore All Recipes" (With Alphabetical Cuisine Filter & Contacts Scroller)
+                                        exploreAllRecipesSection(scrollProxy: scrollProxy)
+                                    }
+                                }
+                                
+                                // Bottom spacing for tab bar
+                                Spacer()
+                                    .frame(height: 80)
+                            }
+                            .padding(.top, 14)
+                        } header: {
+                            stickySearchAndSaveBar
+                        }
                     }
-                    .padding(.top, 14)
-                } header: {
-                    stickySearchAndSaveBar
                 }
-            }
-        }
-        .coordinateSpace(name: "homeScrollSpace")
-        .onPreferenceChange(HomeScrollOffsetKey.self) { minY in
-            let scrolled = minY < -15
-            if vm.isScrolled != scrolled {
-                withAnimation(.easeInOut(duration: 0.22)) {
-                    vm.isScrolled = scrolled
+                .coordinateSpace(name: "homeScrollSpace")
+                .onPreferenceChange(HomeScrollOffsetKey.self) { minY in
+                    let scrolled = minY < -15
+                    if vm.isScrolled != scrolled {
+                        withAnimation(.easeInOut(duration: 0.22)) {
+                            vm.isScrolled = scrolled
+                        }
+                    }
                 }
-            }
-        }
-        .background(MealioColors.background.ignoresSafeArea())
-        .refreshable {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                store.refreshSessionFeed()
+                .background(MealioColors.background.ignoresSafeArea())
+                .refreshable {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        store.refreshSessionFeed()
+                    }
+                }
+                
+                // Floating Alphabet Magnifier HUD during scrubbing
+                if let letter = vm.activeScrubLetter {
+                    ZStack {
+                        Circle()
+                            .fill(.ultraThinMaterial)
+                        
+                        Circle()
+                            .fill(Color.white.opacity(0.92))
+                        
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        MealioColors.terracotta,
+                                        MealioColors.terracotta.opacity(0.5)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2.2
+                            )
+                        
+                        Text(letter)
+                            .font(.system(size: 34, weight: .bold))
+                            .foregroundColor(MealioColors.terracotta)
+                    }
+                    .frame(width: 72, height: 72)
+                    .shadow(color: Color.black.opacity(0.18), radius: 14, x: 0, y: 5)
+                    .transition(.scale(scale: 0.85).combined(with: .opacity))
+                    .allowsHitTesting(false)
+                }
             }
         }
         .sheet(isPresented: $vm.showingFilterSheet) {
@@ -222,11 +258,16 @@ public struct HomeView: View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 15, weight: .medium))
-                .foregroundColor(MealioColors.textSecondary)
+                .foregroundColor(.black)
             
-            TextField("Search dishes, cravings...", text: $store.searchText)
-                .font(.system(size: 14))
-                .foregroundColor(MealioColors.textPrimary)
+            TextField(
+                "",
+                text: $store.searchText,
+                prompt: Text("Search dishes, cravings...").foregroundColor(.black)
+            )
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(.black)
+            .tint(MealioColors.terracotta)
             
             if !store.searchText.isEmpty {
                 Button(action: {
@@ -658,40 +699,58 @@ public struct HomeView: View {
         }
     }
     
-    // MARK: - Section 5: Explore All Recipes (Alphabetical Order A–Z)
-    private var exploreAllRecipesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+    // MARK: - Section 5: Explore All Recipes (Alphabetical Cuisine Filters + Contacts Side Scroller)
+    private func exploreAllRecipesSection(scrollProxy: ScrollViewProxy) -> some View {
+        let cuisineTabs = ["All", "American", "French", "Indian", "Italian", "Japanese", "Mediterranean", "Mexican", "Middle Eastern", "Spanish", "Thai"]
+        
+        let sourceRecipes: [Recipe] = {
+            let base = (vm.selectedExploreCuisineTab == "All")
+                ? store.allRecipes
+                : store.recipes(forCuisine: vm.selectedExploreCuisineTab)
+            return base.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        }()
+        
+        // Group by first character of recipe title
+        var dict = [String: [Recipe]]()
+        for recipe in sourceRecipes {
+            let letter = String(recipe.title.prefix(1)).uppercased()
+            dict[letter, default: []].append(recipe)
+        }
+        let groupedByLetter: [(letter: String, recipes: [Recipe])] = dict.keys.sorted().map { letter in
+            (letter: letter, recipes: dict[letter]!)
+        }
+        let availableLettersSet = Set(dict.keys)
+        
+        return VStack(alignment: .leading, spacing: 16) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Explore all recipes")
                         .font(MealioFont.editorialTitle(size: 22))
                         .foregroundColor(MealioColors.textPrimary)
-                    Text("All \(store.allRecipes.count) recipes in alphabetical order A–Z")
+                    Text("\(sourceRecipes.count) recipes organized alphabetically")
                         .font(.system(size: 12, weight: .regular))
                         .foregroundColor(MealioColors.textSecondary)
                 }
                 
                 Spacer()
             }
+            .padding(.horizontal, 20)
             
-            // Alphabetical Quick Filter Tabs (Liquid Glass)
-            let letters = ["All", "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "Y", "Z"]
+            // Alphabetical Cuisine Sub-Tabs (Liquid Glass)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    ForEach(letters, id: \.self) { letter in
-                        let isSelected = vm.selectedExploreLetterTab == letter
+                    ForEach(cuisineTabs, id: \.self) { cuisine in
+                        let isSelected = vm.selectedExploreCuisineTab == cuisine
                         Button(action: {
                             HapticFeedback.light()
                             withAnimation(.spring(response: 0.28, dampingFraction: 0.76)) {
-                                vm.selectedExploreLetterTab = letter
-                                vm.visibleRecipesCount = 16
+                                vm.selectedExploreCuisineTab = cuisine
                             }
                         }) {
-                            Text(letter)
+                            Text(cuisine)
                                 .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                                 .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
-                                .frame(minWidth: letter == "All" ? 38 : 28)
-                                .padding(.horizontal, letter == "All" ? 14 : 10)
+                                .padding(.horizontal, 14)
                                 .padding(.vertical, 7)
                                 .liquidGlassCapsule(tint: isSelected ? MealioColors.terracotta : nil, isSelected: isSelected)
                         }
@@ -701,62 +760,127 @@ public struct HomeView: View {
                 .padding(.horizontal, 20)
             }
             
-            let sortedRecipes = store.allRecipes.sorted {
-                $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
-            }
-            
-            let sourceList: [Recipe] = {
-                if vm.selectedExploreLetterTab == "All" {
-                    return sortedRecipes
-                } else {
-                    return sortedRecipes.filter {
-                        $0.title.uppercased().hasPrefix(vm.selectedExploreLetterTab)
-                    }
-                }
-            }()
-            
-            let displayed = Array(sourceList.prefix(vm.visibleRecipesCount))
-            
-            // 2-Column Grid with Strict Geometric Uniformity
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 16) {
-                ForEach(displayed) { recipe in
-                    RecipeCardView(
-                        recipe: recipe,
-                        isSaved: store.isRecipeSaved(recipe.id),
-                        onSelect: {
-                            store.recordVisitedRecipe(recipe)
-                            selectedRecipeForNavigation = recipe
-                        },
-                        onToggleSave: {
-                            store.toggleSave(recipe.id)
-                        },
-                        onAddToGroceries: {
-                            store.addIngredientsToGroceryList(recipe.ingredients.filter { !$0.isInPantry })
+            // Grid + Side Contacts Alphabet Scroller
+            HStack(alignment: .top, spacing: 6) {
+                // Grouped 2-Column Grid
+                LazyVStack(alignment: .leading, spacing: 18) {
+                    ForEach(groupedByLetter, id: \.letter) { group in
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Alphabet Section Header
+                            HStack(spacing: 8) {
+                                Text(group.letter)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(MealioColors.terracotta)
+                                
+                                Rectangle()
+                                    .fill(MealioColors.divider)
+                                    .frame(height: 1)
+                            }
+                            .id("explore-letter-\(group.letter)")
+                            .padding(.top, 4)
+                            
+                            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 14) {
+                                ForEach(group.recipes) { recipe in
+                                    RecipeCardView(
+                                        recipe: recipe,
+                                        isSaved: store.isRecipeSaved(recipe.id),
+                                        onSelect: {
+                                            store.recordVisitedRecipe(recipe)
+                                            selectedRecipeForNavigation = recipe
+                                        },
+                                        onToggleSave: {
+                                            store.toggleSave(recipe.id)
+                                        },
+                                        onAddToGroceries: {
+                                            store.addIngredientsToGroceryList(recipe.ingredients.filter { !$0.isInPantry })
+                                        }
+                                    )
+                                }
+                            }
                         }
-                    )
-                }
-            }
-            
-            if displayed.count < sourceList.count {
-                Button(action: {
-                    withAnimation {
-                        vm.visibleRecipesCount += 16
                     }
-                }) {
-                    Text("Load more (\(sourceList.count - displayed.count) remaining)")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(MealioColors.terracotta)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(
-                            Capsule()
-                                .stroke(MealioColors.terracotta, lineWidth: 1.5)
-                                .background(Capsule().fill(MealioColors.cardLight))
-                        )
-                        .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .padding(.top, 8)
+                
+                // Vertical Alphabet Scroller like in iOS Contacts
+                alphabetScroller(availableLetters: availableLettersSet, scrollProxy: scrollProxy)
+            }
+            .padding(.leading, 20)
+            .padding(.trailing, 6)
+        }
+    }
+    
+    // MARK: - Side Alphabet Index Scroller (Native iOS Contacts Style)
+    private func alphabetScroller(availableLetters: Set<String>, scrollProxy: ScrollViewProxy) -> some View {
+        let allLetters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "Y", "Z"]
+        let itemHeight: CGFloat = 13.5
+        
+        return VStack(spacing: 0.5) {
+            ForEach(allLetters, id: \.self) { letter in
+                let hasRecipes = availableLetters.contains(letter)
+                Text(letter)
+                    .font(.system(size: 9.0, weight: hasRecipes ? .bold : .regular))
+                    .foregroundColor(hasRecipes ? MealioColors.terracotta : MealioColors.textTertiary.opacity(0.35))
+                    .frame(width: 14, height: itemHeight)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        HapticFeedback.selection()
+                        vm.activeScrubLetter = letter
+                        jumpToLetter(letter, available: availableLetters, scrollProxy: scrollProxy)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            if vm.activeScrubLetter == letter {
+                                withAnimation { vm.activeScrubLetter = nil }
+                            }
+                        }
+                    }
+            }
+        }
+        .padding(.vertical, 6)
+        .padding(.horizontal, 2)
+        .background(
+            Capsule()
+                .fill(Color.white.opacity(0.08))
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+        )
+        .overlay(
+            Capsule()
+                .stroke(Color.white.opacity(0.35), lineWidth: 0.6)
+        )
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    let step = itemHeight + 0.5
+                    let totalHeight = CGFloat(allLetters.count) * step
+                    let clampedY = min(max(0, value.location.y), totalHeight - 1)
+                    let index = min(max(0, Int(clampedY / step)), allLetters.count - 1)
+                    let letter = allLetters[index]
+                    if vm.activeScrubLetter != letter {
+                        vm.activeScrubLetter = letter
+                        HapticFeedback.selection()
+                        jumpToLetter(letter, available: availableLetters, scrollProxy: scrollProxy)
+                    }
+                }
+                .onEnded { _ in
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        vm.activeScrubLetter = nil
+                    }
+                }
+        )
+    }
+    
+    private func jumpToLetter(_ target: String, available: Set<String>, scrollProxy: ScrollViewProxy) {
+        if available.contains(target) {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                scrollProxy.scrollTo("explore-letter-\(target)", anchor: .top)
+            }
+        } else if let next = available.sorted().first(where: { $0 > target }) {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                scrollProxy.scrollTo("explore-letter-\(next)", anchor: .top)
+            }
+        } else if let last = available.sorted().last {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                scrollProxy.scrollTo("explore-letter-\(last)", anchor: .top)
             }
         }
     }
