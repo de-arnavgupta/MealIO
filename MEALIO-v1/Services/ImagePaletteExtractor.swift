@@ -14,51 +14,35 @@ public struct CardPalette: Equatable {
     )
 }
 
+@MainActor
 public class ImagePaletteExtractor: ObservableObject {
     public static let shared = ImagePaletteExtractor()
     
-    @Published private var paletteCache: [String: CardPalette] = [:]
-    private let cacheQueue = DispatchQueue(label: "com.mealio.paletteCache", attributes: .concurrent)
+    @Published private(set) public var paletteCache: [String: CardPalette] = [:]
     private var inFlightSources = Set<String>()
     
     private init() {}
     
     public func palette(for source: String) -> CardPalette {
-        var cached: CardPalette?
-        cacheQueue.sync {
-            cached = paletteCache[source]
-        }
-        
-        if let cached = cached {
+        if let cached = paletteCache[source] {
             return cached
         }
         
-        // Trigger asynchronous extraction
         extractAsync(for: source)
         return .fallback
     }
     
     public func extractAsync(for source: String) {
-        var shouldProceed = false
-        cacheQueue.sync {
-            if !inFlightSources.contains(source) && paletteCache[source] == nil {
-                shouldProceed = true
-            }
+        guard !inFlightSources.contains(source) && paletteCache[source] == nil else {
+            return
         }
         
-        guard shouldProceed else { return }
+        inFlightSources.insert(source)
         
-        cacheQueue.async(flags: .barrier) {
-            self.inFlightSources.insert(source)
-        }
-        
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            
+        Task.detached(priority: .userInitiated) {
             var sampledImage: UIImage? = nil
             
             if source.hasPrefix("http://") || source.hasPrefix("https://") {
-                // Request a small thumbnail for instant color extraction without heavy network load
                 var fetchURL = URL(string: source)
                 if source.contains("images.unsplash.com"), let components = URLComponents(string: source) {
                     var newComponents = components
@@ -80,23 +64,20 @@ public class ImagePaletteExtractor: ObservableObject {
                     }
                 }
             } else {
-                // Local asset from Assets.xcassets
                 sampledImage = UIImage(named: source)
             }
             
-            let palette = sampledImage.flatMap { self.extract(from: $0) } ?? .fallback
+            let palette = sampledImage.flatMap { Self.extract(from: $0) } ?? .fallback
             
-            DispatchQueue.main.async {
-                self.cacheQueue.async(flags: .barrier) {
-                    self.paletteCache[source] = palette
-                    self.inFlightSources.remove(source)
-                }
-                self.objectWillChange.send()
+            // Publish exclusively on the MainActor
+            await MainActor.run {
+                ImagePaletteExtractor.shared.paletteCache[source] = palette
+                ImagePaletteExtractor.shared.inFlightSources.remove(source)
             }
         }
     }
     
-    private func extract(from image: UIImage) -> CardPalette {
+    nonisolated private static func extract(from image: UIImage) -> CardPalette {
         guard let cgImage = image.cgImage else { return .fallback }
         let width = cgImage.width
         let height = cgImage.height

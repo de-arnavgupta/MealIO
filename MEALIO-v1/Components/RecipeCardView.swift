@@ -2,17 +2,17 @@ import SwiftUI
 
 public struct RecipeCardView: View {
     let recipe: Recipe
-    let isSaved: Bool
+    var isSaved: Bool = false
     let onSelect: () -> Void
-    let onToggleSave: () -> Void
+    var onToggleSave: (() -> Void)? = nil
     
     @ObservedObject private var paletteExtractor = ImagePaletteExtractor.shared
     
     public init(
         recipe: Recipe,
-        isSaved: Bool,
+        isSaved: Bool = false,
         onSelect: @escaping () -> Void,
-        onToggleSave: @escaping () -> Void
+        onToggleSave: (() -> Void)? = nil
     ) {
         self.recipe = recipe
         self.isSaved = isSaved
@@ -25,69 +25,58 @@ public struct RecipeCardView: View {
         
         Button(action: onSelect) {
             VStack(spacing: 0) {
-                // Top Edge-to-Edge Image with soft bottom dissolve
-                ZStack(alignment: .topTrailing) {
+                // Top Edge-to-Edge Image with soft organic bottom dissolve
+                ZStack(alignment: .bottom) {
                     MealioImageView(recipe.cardImageName)
                         .frame(maxWidth: .infinity)
                         .frame(height: 154)
                         .clipped()
-                        .overlay(
-                            LinearGradient(
-                                colors: [
-                                    Color.clear,
-                                    palette.backgroundColor.opacity(0.15),
-                                    palette.backgroundColor
-                                ],
-                                startPoint: .center,
-                                endPoint: .bottom
-                            )
-                        )
                     
-                    // Bookmark action pill
-                    Button(action: onToggleSave) {
-                        Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(6)
-                            .background(Color.black.opacity(0.35))
-                            .clipShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .padding(8)
+                    LinearGradient(
+                        colors: [
+                            Color.clear,
+                            palette.backgroundColor.opacity(0.15),
+                            palette.backgroundColor
+                        ],
+                        startPoint: .center,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 48)
                 }
                 
-                // Centered dynamic editorial text area
-                VStack(spacing: 6) {
+                // Centered dynamic editorial text area matching reference
+                VStack(spacing: 8) {
                     Text(recipe.title)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundColor(palette.textColor)
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity, alignment: .center)
                     
-                    HStack(spacing: 4) {
+                    HStack(spacing: 5) {
                         Text(recipe.totalTime)
                         Text("·")
                         Text(recipe.effort.lowercased())
                         Image(systemName: "star.fill")
-                            .font(.system(size: 10))
+                            .font(.system(size: 11))
                             .foregroundColor(palette.textColor)
                         Text(String(format: "%.1f", recipe.rating))
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                     }
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(palette.subtleTextColor)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(palette.textColor.opacity(0.92))
                     .frame(maxWidth: .infinity, alignment: .center)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 12)
+                .padding(.horizontal, 12)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
                 .frame(maxWidth: .infinity)
-                .frame(height: 92)
+                .frame(height: 94)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 246)
+            .frame(height: 248)
             .background(palette.backgroundColor)
-            .cornerRadius(26)
+            .cornerRadius(28)
             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 3)
             .contentShape(Rectangle())
         }
