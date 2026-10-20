@@ -268,90 +268,94 @@ public struct HomeView: View {
             let eveningItems = Array(store.eveningEditRecipes.prefix(7))
             let totalItems = eveningItems.count
             
-            TabView(selection: $vm.selectedHeroIndex) {
-                ForEach(Array(eveningItems.enumerated()), id: \.offset) { index, recipe in
-                    Button(action: {
-                        store.recordVisitedRecipe(recipe)
-                        selectedRecipeForNavigation = recipe
-                    }) {
-                        ZStack(alignment: .bottomLeading) {
-                            MealioImageView(recipe.cardImageName)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .clipped()
-                                .cornerRadius(28)
-                                .overlay(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.clear,
-                                            Color.black.opacity(0.18),
-                                            Color.black.opacity(0.85)
-                                        ]),
-                                        startPoint: .center,
-                                        endPoint: .bottom
-                                    )
-                                    .cornerRadius(28)
-                                )
-                            
-                            // Top floating badge: "TODAY'S SPECIAL"
-                            VStack {
-                                HStack {
-                                    Text("TODAY'S SPECIAL")
-                                        .font(.system(size: 11, weight: .heavy))
-                                        .tracking(0.6)
-                                        .foregroundColor(MealioColors.textPrimary)
-                                        .padding(.horizontal, 14)
-                                        .padding(.vertical, 7)
-                                        .background(Color.white.opacity(0.88))
-                                        .clipShape(Capsule())
-                                    
-                                    Spacer()
-                                }
-                                .padding(.top, 16)
-                                .padding(.leading, 16)
-                                
-                                Spacer()
+            // Fixed Window Carousel: Window frame remains rock-solid stationary, only the photo & content change inside
+            ZStack(alignment: .bottomLeading) {
+                // Photo paging inside the fixed window
+                TabView(selection: $vm.selectedHeroIndex) {
+                    ForEach(Array(eveningItems.enumerated()), id: \.offset) { index, recipe in
+                        MealioImageView(recipe.cardImageName)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .clipped()
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                store.recordVisitedRecipe(recipe)
+                                selectedRecipeForNavigation = recipe
                             }
-                            
-                            // Bottom card metadata
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(recipe.title)
-                                    .font(.system(size: 26, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .lineLimit(2)
-                                    .multilineTextAlignment(.leading)
-                                
-                                HStack(spacing: 4) {
-                                    Text(recipe.totalTime)
-                                    Text("·")
-                                    Text(recipe.effort)
-                                    HStack(spacing: 2) {
-                                        Image(systemName: "star.fill")
-                                            .font(.system(size: 9))
-                                            .foregroundColor(.white)
-                                        Text(String(format: "%.1f", recipe.rating))
-                                            .font(.system(size: 12, weight: .semibold))
-                                    }
-                                }
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(Color.white.opacity(0.92))
-                                .lineLimit(1)
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 18)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.horizontal, 20)
-                        .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
-                        .contentShape(Rectangle())
+                            .tag(index)
                     }
-                    .buttonStyle(.plain)
-                    .tag(index)
                 }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .frame(height: 270)
-            .overlay(alignment: .bottom) {
-                // Centered tapered pagination dots tracking active index
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                
+                // Vignette gradient overlay pinned to the window
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.clear,
+                        Color.black.opacity(0.18),
+                        Color.black.opacity(0.85)
+                    ]),
+                    startPoint: .center,
+                    endPoint: .bottom
+                )
+                .allowsHitTesting(false)
+                
+                // Top floating badge: "TODAY'S SPECIAL" pinned to the window
+                VStack {
+                    HStack {
+                        Text("TODAY'S SPECIAL")
+                            .font(.system(size: 11, weight: .heavy))
+                            .tracking(0.6)
+                            .foregroundColor(MealioColors.textPrimary)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                            .background(Color.white.opacity(0.88))
+                            .clipShape(Capsule())
+                        
+                        Spacer()
+                    }
+                    .padding(.top, 16)
+                    .padding(.leading, 16)
+                    
+                    Spacer()
+                }
+                .allowsHitTesting(false)
+                
+                // Bottom card metadata pinned to the window, dynamically updating with selected photo
+                if eveningItems.indices.contains(vm.selectedHeroIndex) {
+                    let currentRecipe = eveningItems[vm.selectedHeroIndex]
+                    
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(currentRecipe.title)
+                            .font(.system(size: 26, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .id("title-\(currentRecipe.id)")
+                            .transition(.opacity)
+                        
+                        HStack(spacing: 4) {
+                            Text(currentRecipe.totalTime)
+                            Text("·")
+                            Text(currentRecipe.effort)
+                            HStack(spacing: 2) {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.white)
+                                Text(String(format: "%.1f", currentRecipe.rating))
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+                        }
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(Color.white.opacity(0.92))
+                        .lineLimit(1)
+                        .id("meta-\(currentRecipe.id)")
+                        .transition(.opacity)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 18)
+                    .allowsHitTesting(false)
+                }
+                
+                // Centered tapered pagination dots pinned to the window
                 HStack(spacing: 5) {
                     ForEach(0..<min(totalItems, 7), id: \.self) { dotIdx in
                         let distance = abs(dotIdx - vm.selectedHeroIndex)
@@ -361,6 +365,7 @@ public struct HomeView: View {
                         Circle()
                             .fill(Color.white.opacity(opacity))
                             .frame(width: diameter, height: diameter)
+                            .contentShape(Rectangle())
                             .onTapGesture {
                                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                                     vm.selectedHeroIndex = dotIdx
@@ -370,7 +375,12 @@ public struct HomeView: View {
                 }
                 .offset(x: 20)
                 .padding(.bottom, 18)
+                .frame(maxWidth: .infinity, alignment: .center)
             }
+            .frame(height: 270)
+            .cornerRadius(28)
+            .padding(.horizontal, 20)
+            .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
             .onAppear {
                 if totalItems > 0 && (vm.selectedHeroIndex >= totalItems || vm.selectedHeroIndex == 0) {
                     vm.selectedHeroIndex = min(3, totalItems - 1)

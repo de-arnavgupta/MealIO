@@ -6,6 +6,8 @@ public struct RecipeCardView: View {
     let onSelect: () -> Void
     let onToggleSave: () -> Void
     
+    @ObservedObject private var paletteExtractor = ImagePaletteExtractor.shared
+    
     public init(
         recipe: Recipe,
         isSaved: Bool,
@@ -19,68 +21,77 @@ public struct RecipeCardView: View {
     }
     
     public var body: some View {
+        let palette = paletteExtractor.palette(for: recipe.cardImageName)
+        
         Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 8) {
-                // Fixed-height uniform image container
+            VStack(spacing: 0) {
+                // Top Edge-to-Edge Image with soft bottom dissolve
                 ZStack(alignment: .topTrailing) {
                     MealioImageView(recipe.cardImageName)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 125)
+                        .frame(height: 154)
                         .clipped()
-                        .cornerRadius(14)
+                        .overlay(
+                            LinearGradient(
+                                colors: [
+                                    Color.clear,
+                                    palette.backgroundColor.opacity(0.15),
+                                    palette.backgroundColor
+                                ],
+                                startPoint: .center,
+                                endPoint: .bottom
+                            )
+                        )
                     
+                    // Bookmark action pill
                     Button(action: onToggleSave) {
                         Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
-                            .font(.system(size: 11))
+                            .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(.white)
                             .padding(6)
-                            .background(Color.black.opacity(0.45))
+                            .background(Color.black.opacity(0.35))
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
-                    .padding(6)
+                    .padding(8)
                 }
                 
-                // Text block with exact rigid vertical alignment
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(recipe.cuisine.uppercased())
-                        .font(MealioFont.eyebrow(size: 9))
-                        .foregroundColor(MealioColors.terracotta)
-                        .frame(height: 12, alignment: .leading)
-                    
+                // Centered dynamic editorial text area
+                VStack(spacing: 6) {
                     Text(recipe.title)
-                        .font(MealioFont.editorialTitle(size: 14))
-                        .foregroundColor(MealioColors.textPrimary)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(palette.textColor)
                         .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                        .frame(height: 38, alignment: .topLeading)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity, alignment: .center)
                     
                     HStack(spacing: 4) {
                         Text(recipe.totalTime)
-                        Text("•")
-                        Text(recipe.effort)
-                        Spacer()
-                        HStack(spacing: 2) {
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 9))
-                                .foregroundColor(MealioColors.cookingGlow)
-                            Text(String(format: "%.1f", recipe.rating))
-                                .font(.system(size: 10, weight: .bold))
-                        }
+                        Text("·")
+                        Text(recipe.effort.lowercased())
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(palette.textColor)
+                        Text(String(format: "%.1f", recipe.rating))
+                            .font(.system(size: 12, weight: .semibold))
                     }
-                    .font(.system(size: 11))
-                    .foregroundColor(MealioColors.textSecondary)
-                    .frame(height: 14)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(palette.subtleTextColor)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .frame(height: 92)
             }
-            .padding(10)
             .frame(maxWidth: .infinity)
-            .frame(height: 222) // Exact uniform height for all cards!
-            .background(MealioColors.cardLight)
-            .cornerRadius(18)
-            .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+            .frame(height: 246)
+            .background(palette.backgroundColor)
+            .cornerRadius(26)
+            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 3)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.25), value: palette.backgroundColor)
     }
 }
