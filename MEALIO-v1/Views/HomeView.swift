@@ -400,35 +400,18 @@ public struct HomeView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 14) {
                     ForEach(store.lastVisitedRecipes) { recipe in
-                        Button(action: {
-                            store.recordVisitedRecipe(recipe)
-                            selectedRecipeForNavigation = recipe
-                        }) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                MealioImageView(recipe.cardImageName)
-                                    .frame(width: 145, height: 95)
-                                    .clipped()
-                                    .cornerRadius(12)
-                                
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(recipe.title)
-                                        .font(MealioFont.editorialTitle(size: 15))
-                                        .foregroundColor(MealioColors.textPrimary)
-                                        .lineLimit(1)
-                                    
-                                    Text("\(recipe.totalTime) • \(recipe.effort)")
-                                        .font(.system(size: 11, weight: .regular))
-                                        .foregroundColor(MealioColors.textSecondary)
-                                }
+                        RecipeCardView(
+                            recipe: recipe,
+                            isSaved: store.isRecipeSaved(recipe.id),
+                            onSelect: {
+                                store.recordVisitedRecipe(recipe)
+                                selectedRecipeForNavigation = recipe
+                            },
+                            onToggleSave: {
+                                store.toggleSave(recipe.id)
                             }
-                            .padding(10)
-                            .frame(width: 165, height: 160)
-                            .background(MealioColors.cardLight)
-                            .cornerRadius(18)
-                            .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
+                        )
+                        .frame(width: 175)
                     }
                 }
                 .padding(.horizontal, 20)
