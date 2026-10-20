@@ -2,7 +2,7 @@ import SwiftUI
 import Combine
 
 public class HomeViewModel: ObservableObject {
-    @Published public var selectedHeroIndex: Int = 0
+    @Published public var selectedHeroIndex: Int = 3
     @Published public var showingFilterSheet: Bool = false
     @Published public var showingProfileSheet: Bool = false
     @Published public var showingWisdomSheet: Bool = false
@@ -268,112 +268,113 @@ public struct HomeView: View {
             let eveningItems = Array(store.eveningEditRecipes.prefix(7))
             let totalItems = eveningItems.count
             
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 16) {
-                        ForEach(Array(eveningItems.enumerated()), id: \.element.id) { index, recipe in
-                            Button(action: {
-                                store.recordVisitedRecipe(recipe)
-                                selectedRecipeForNavigation = recipe
-                            }) {
-                                ZStack(alignment: .bottomLeading) {
-                                    MealioImageView(recipe.cardImageName)
-                                        .frame(width: 320, height: 270)
-                                        .clipped()
-                                        .cornerRadius(28)
-                                        .overlay(
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [
-                                                    Color.clear,
-                                                    Color.black.opacity(0.18),
-                                                    Color.black.opacity(0.85)
-                                                ]),
-                                                startPoint: .center,
-                                                endPoint: .bottom
-                                            )
-                                            .cornerRadius(28)
-                                        )
+            TabView(selection: $vm.selectedHeroIndex) {
+                ForEach(Array(eveningItems.enumerated()), id: \.offset) { index, recipe in
+                    Button(action: {
+                        store.recordVisitedRecipe(recipe)
+                        selectedRecipeForNavigation = recipe
+                    }) {
+                        ZStack(alignment: .bottomLeading) {
+                            MealioImageView(recipe.cardImageName)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .clipped()
+                                .cornerRadius(28)
+                                .overlay(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.clear,
+                                            Color.black.opacity(0.18),
+                                            Color.black.opacity(0.85)
+                                        ]),
+                                        startPoint: .center,
+                                        endPoint: .bottom
+                                    )
+                                    .cornerRadius(28)
+                                )
+                            
+                            // Top floating badge: "TODAY'S SPECIAL"
+                            VStack {
+                                HStack {
+                                    Text("TODAY'S SPECIAL")
+                                        .font(.system(size: 11, weight: .heavy))
+                                        .tracking(0.6)
+                                        .foregroundColor(MealioColors.textPrimary)
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 7)
+                                        .background(Color.white.opacity(0.88))
+                                        .clipShape(Capsule())
                                     
-                                    // Top floating badge: "TODAY'S SPECIAL"
-                                    VStack {
-                                        HStack {
-                                            Text("TODAY'S SPECIAL")
-                                                .font(.system(size: 11, weight: .heavy))
-                                                .tracking(0.6)
-                                                .foregroundColor(MealioColors.textPrimary)
-                                                .padding(.horizontal, 14)
-                                                .padding(.vertical, 7)
-                                                .background(Color.white.opacity(0.88))
-                                                .clipShape(Capsule())
-                                            
-                                            Spacer()
-                                        }
-                                        .padding(.top, 16)
-                                        .padding(.leading, 16)
-                                        
-                                        Spacer()
-                                    }
-                                    
-                                    // Bottom card metadata & integrated pagination indicator
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Text(recipe.title)
-                                            .font(.system(size: 26, weight: .bold))
-                                            .foregroundColor(.white)
-                                            .lineLimit(2)
-                                            .multilineTextAlignment(.leading)
-                                        
-                                        ZStack(alignment: .bottom) {
-                                            // Left metadata info
-                                            HStack {
-                                                HStack(spacing: 4) {
-                                                    Text(recipe.totalTime)
-                                                    Text("·")
-                                                    Text(recipe.effort)
-                                                    HStack(spacing: 2) {
-                                                        Image(systemName: "star.fill")
-                                                            .font(.system(size: 9))
-                                                            .foregroundColor(.white)
-                                                        Text(String(format: "%.1f", recipe.rating))
-                                                            .font(.system(size: 12, weight: .semibold))
-                                                    }
-                                                }
-                                                .font(.system(size: 12, weight: .medium))
-                                                .foregroundColor(Color.white.opacity(0.92))
-                                                .lineLimit(1)
-                                                
-                                                Spacer()
-                                            }
-                                            
-                                            // Centered tapered pagination dots
-                                            HStack(spacing: 4.5) {
-                                                ForEach(0..<min(totalItems, 7), id: \.self) { dotIdx in
-                                                    let distance = abs(dotIdx - index)
-                                                    let diameter: CGFloat = distance == 0 ? 7.5 : (distance == 1 ? 5.5 : (distance == 2 ? 4.5 : 3.5))
-                                                    let opacity: Double = distance == 0 ? 1.0 : (distance == 1 ? 0.6 : (distance == 2 ? 0.4 : 0.25))
-                                                    
-                                                    Circle()
-                                                        .fill(Color.white.opacity(opacity))
-                                                        .frame(width: diameter, height: diameter)
-                                                }
-                                            }
-                                            .offset(x: 20)
-                                        }
-                                    }
-                                    .padding(.horizontal, 20)
-                                    .padding(.bottom, 18)
+                                    Spacer()
                                 }
-                                .frame(width: 320, height: 270)
-                                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
-                                .contentShape(Rectangle())
+                                .padding(.top, 16)
+                                .padding(.leading, 16)
+                                
+                                Spacer()
                             }
-                            .buttonStyle(.plain)
-                            .id(recipe.id)
+                            
+                            // Bottom card metadata
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(recipe.title)
+                                    .font(.system(size: 26, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.leading)
+                                
+                                HStack(spacing: 4) {
+                                    Text(recipe.totalTime)
+                                    Text("·")
+                                    Text(recipe.effort)
+                                    HStack(spacing: 2) {
+                                        Image(systemName: "star.fill")
+                                            .font(.system(size: 9))
+                                            .foregroundColor(.white)
+                                        Text(String(format: "%.1f", recipe.rating))
+                                            .font(.system(size: 12, weight: .semibold))
+                                    }
+                                }
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(Color.white.opacity(0.92))
+                                .lineLimit(1)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 18)
                         }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.horizontal, 20)
+                        .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+                        .contentShape(Rectangle())
                     }
-                    .padding(.horizontal, 20)
-                    .scrollTargetLayout()
+                    .buttonStyle(.plain)
+                    .tag(index)
                 }
-                .scrollTargetBehavior(.viewAligned)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: 270)
+            .overlay(alignment: .bottom) {
+                // Centered tapered pagination dots tracking active index
+                HStack(spacing: 5) {
+                    ForEach(0..<min(totalItems, 7), id: \.self) { dotIdx in
+                        let distance = abs(dotIdx - vm.selectedHeroIndex)
+                        let diameter: CGFloat = distance == 0 ? 7.5 : (distance == 1 ? 5.5 : (distance == 2 ? 4.5 : 3.5))
+                        let opacity: Double = distance == 0 ? 1.0 : (distance == 1 ? 0.6 : (distance == 2 ? 0.4 : 0.25))
+                        
+                        Circle()
+                            .fill(Color.white.opacity(opacity))
+                            .frame(width: diameter, height: diameter)
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                    vm.selectedHeroIndex = dotIdx
+                                }
+                            }
+                    }
+                }
+                .offset(x: 20)
+                .padding(.bottom, 18)
+            }
+            .onAppear {
+                if totalItems > 0 && (vm.selectedHeroIndex >= totalItems || vm.selectedHeroIndex == 0) {
+                    vm.selectedHeroIndex = min(3, totalItems - 1)
+                }
             }
         }
     }

@@ -56,22 +56,22 @@ extension Color {
     }
 }
 
-// MARK: - Typography & Editorial Styles
+// MARK: - Typography & Editorial Styles (Native San Francisco)
 public struct MealioFont {
     public static func brandLogo(size: CGFloat = 26) -> Font {
-        Font.system(size: size, weight: .bold, design: .serif)
+        Font.system(size: size, weight: .bold, design: .default)
     }
     
     public static func editorialHero(size: CGFloat = 34) -> Font {
-        Font.system(size: size, weight: .bold, design: .serif)
+        Font.system(size: size, weight: .bold, design: .default)
     }
     
     public static func editorialTitle(size: CGFloat = 24) -> Font {
-        Font.system(size: size, weight: .semibold, design: .serif)
+        Font.system(size: size, weight: .semibold, design: .default)
     }
     
     public static func editorialQuote(size: CGFloat = 20) -> Font {
-        Font.system(size: size, weight: .regular, design: .serif)
+        Font.system(size: size, weight: .regular, design: .default)
     }
     
     public static func eyebrow(size: CGFloat = 11) -> Font {

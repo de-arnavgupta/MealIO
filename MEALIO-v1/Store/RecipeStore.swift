@@ -90,8 +90,21 @@ public class RecipeStore: ObservableObject {
         }
         
         // If not enough items, fill with others
-        for r in pool where items.count < 8 && !items.contains(where: { $0.id == r.id }) {
+        for r in pool where items.count < 7 && !items.contains(where: { $0.id == r.id }) {
             items.append(r)
+        }
+        
+        // Place Golden hour scallops at index 3 (middle of 7 items) for reference consistency
+        if let scallops = allRecipes.first(where: { $0.title.lowercased().contains("scallop") }) {
+            items.removeAll(where: { $0.id == scallops.id })
+            if items.count >= 3 {
+                items.insert(scallops, at: 3)
+            } else {
+                items.append(scallops)
+            }
+        }
+        if items.count > 7 {
+            items = Array(items.prefix(7))
         }
         
         self.eveningEditRecipes = items
