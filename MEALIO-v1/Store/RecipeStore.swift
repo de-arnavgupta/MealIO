@@ -18,6 +18,7 @@ public class RecipeStore: ObservableObject {
     
     // Dynamic Rotating Feed States
     @Published public var eveningEditRecipes: [Recipe] = []
+    @Published public var lastVisitedRecipes: [Recipe] = []
     @Published public var moodComfortRecipe: Recipe
     @Published public var moodBakeRecipe: Recipe
     @Published public var moodRecipes: [Recipe] = []
@@ -142,6 +143,33 @@ public class RecipeStore: ObservableObject {
         if !quickCandidates.isEmpty {
             self.quickRecipes = Array(quickCandidates.prefix(8))
         }
+        
+        // 5. Seed Last Visited recipes if empty (prioritizing Churros con Chocolate matching user preference)
+        if lastVisitedRecipes.isEmpty {
+            let churros = allRecipes.first { $0.title.lowercased().contains("churros") }
+            let initialRecent: [Recipe] = [
+                churros ?? allRecipes[0],
+                moodComfortRecipe,
+                moodBakeRecipe,
+                allRecipes.first(where: { $0.title.lowercased().contains("salmon") }) ?? allRecipes[1],
+                allRecipes.first(where: { $0.title.lowercased().contains("scallop") }) ?? allRecipes[2],
+                allRecipes.first(where: { $0.title.lowercased().contains("cacio") }) ?? allRecipes[3]
+            ]
+            var unique: [Recipe] = []
+            for r in initialRecent where !unique.contains(where: { $0.id == r.id }) {
+                unique.append(r)
+            }
+            self.lastVisitedRecipes = unique
+        }
+    }
+    
+    public func recordVisitedRecipe(_ recipe: Recipe) {
+        var list = lastVisitedRecipes.filter { $0.id != recipe.id }
+        list.insert(recipe, at: 0)
+        if list.count > 12 {
+            list = Array(list.prefix(12))
+        }
+        self.lastVisitedRecipes = list
     }
     
     // MARK: - Cuisines Overview (10 World Cuisines)

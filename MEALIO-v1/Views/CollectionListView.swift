@@ -68,6 +68,7 @@ public struct CollectionListView: View {
                             recipe: recipe,
                             isSaved: store.isRecipeSaved(recipe.id),
                             onSelect: {
+                                store.recordVisitedRecipe(recipe)
                                 dismiss()
                                 selectedRecipeForNavigation = recipe
                             },

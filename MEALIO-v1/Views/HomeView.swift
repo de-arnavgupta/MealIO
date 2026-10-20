@@ -60,13 +60,11 @@ public struct HomeView: View {
                         // Section 1: "The evening edit" (Dynamic Carousel with daily rotating luxury dishes)
                         eveningEditSection
                         
-                        // Section 2: "Made for your mood" (Dynamic Bento Grid)
-                        madeForYourMoodSection
-                            .padding(.horizontal, 20)
+                        // Section 2: "Last visited" (Horizontal Shelf)
+                        lastVisitedSection
                         
                         // Section 3: "Short on time. Not taste." (Dynamic fast weeknight recipes)
                         shortOnTimeSection
-                            .padding(.horizontal, 20)
                         
                         // Section 4: "Cuisines of the World" (10 World Cuisines Shelf)
                         cuisinesOfTheWorldSection
@@ -273,6 +271,7 @@ public struct HomeView: View {
                 HStack(spacing: 16) {
                     ForEach(Array(eveningItems.enumerated()), id: \.element.id) { index, recipe in
                         Button(action: {
+                            store.recordVisitedRecipe(recipe)
                             selectedRecipeForNavigation = recipe
                         }) {
                             ZStack(alignment: .bottomLeading) {
@@ -365,20 +364,25 @@ public struct HomeView: View {
         }
     }
     
-    // MARK: - Section 2: Made For Your Mood (Dynamic Bento Grid)
-    private var madeForYourMoodSection: some View {
+    // MARK: - Section 2: Last Visited (Horizontal Shelf)
+    private var lastVisitedSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("Made for your mood")
-                    .font(MealioFont.editorialTitle(size: 22))
-                    .foregroundColor(MealioColors.textPrimary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Last visited")
+                        .font(MealioFont.editorialTitle(size: 22))
+                        .foregroundColor(MealioColors.textPrimary)
+                    Text("Pick up right where you left off")
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(MealioColors.textSecondary)
+                }
                 
                 Spacer()
                 
                 Button(action: {
-                    vm.activeCollectionTitle = "Made for your mood"
-                    vm.activeCollectionSubtitle = "Slow weekends, comforting pastas, and rustic bakes."
-                    vm.activeCollectionRecipes = store.moodRecipes
+                    vm.activeCollectionTitle = "Last visited"
+                    vm.activeCollectionSubtitle = "Recipes you recently explored."
+                    vm.activeCollectionRecipes = store.lastVisitedRecipes
                 }) {
                     HStack(spacing: 2) {
                         Text("View all")
@@ -391,119 +395,59 @@ public struct HomeView: View {
                 }
                 .buttonStyle(.plain)
             }
+            .padding(.horizontal, 20)
             
-            HStack(alignment: .top, spacing: 14) {
-                // Left Tall Card: Dynamic Comfort Dish
-                let comfort = store.moodComfortRecipe
-                Button(action: {
-                    selectedRecipeForNavigation = comfort
-                }) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        MealioImageView(comfort.cardImageName)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 125)
-                            .clipShape(Circle())
-                            .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(comfort.categoryBadge)
-                                .font(MealioFont.eyebrow(size: 9))
-                                .tracking(0.8)
-                                .foregroundColor(MealioColors.terracotta)
-                            
-                            Text(comfort.title)
-                                .font(MealioFont.editorialTitle(size: 18))
-                                .foregroundColor(MealioColors.textPrimary)
-                                .lineLimit(2)
-                                .multilineTextAlignment(.leading)
-                            
-                            Text("\(comfort.totalTime) • \(comfort.effort)")
-                                .font(.system(size: 11, weight: .regular))
-                                .foregroundColor(MealioColors.textSecondary)
-                                .padding(.top, 2)
-                        }
-                    }
-                    .padding(14)
-                    .frame(maxWidth: .infinity, minHeight: 235)
-                    .background(MealioColors.warmBeige.opacity(0.7))
-                    .cornerRadius(20)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                
-                // Right Column: Dynamic Kitchen Wisdom Quote Card + Dynamic Bake Dish
-                VStack(spacing: 12) {
-                    // Kitchen Wisdom Card (Isolated Click Target!)
-                    Button(action: {
-                        vm.showingWisdomSheet = true
-                    }) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Text(store.activeWisdom.tag)
-                                    .font(MealioFont.eyebrow(size: 8))
-                                    .tracking(0.8)
-                                    .foregroundColor(Color.white.opacity(0.8))
-                                Spacer()
-                                Image(systemName: store.activeWisdom.iconName)
-                                    .font(.system(size: 10))
-                                    .foregroundColor(Color.white.opacity(0.8))
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(store.lastVisitedRecipes) { recipe in
+                        Button(action: {
+                            store.recordVisitedRecipe(recipe)
+                            selectedRecipeForNavigation = recipe
+                        }) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                MealioImageView(recipe.cardImageName)
+                                    .frame(width: 145, height: 95)
+                                    .clipped()
+                                    .cornerRadius(12)
+                                
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(recipe.title)
+                                        .font(MealioFont.editorialTitle(size: 15))
+                                        .foregroundColor(MealioColors.textPrimary)
+                                        .lineLimit(1)
+                                    
+                                    Text("\(recipe.totalTime) • \(recipe.effort)")
+                                        .font(.system(size: 11, weight: .regular))
+                                        .foregroundColor(MealioColors.textSecondary)
+                                }
                             }
-                            
-                            Text(store.activeWisdom.quote)
-                                .font(MealioFont.editorialQuote(size: 16))
-                                .foregroundColor(.white)
-                                .lineSpacing(2)
-                                .fixedSize(horizontal: false, vertical: true)
+                            .padding(10)
+                            .frame(width: 165, height: 160)
+                            .background(MealioColors.cardLight)
+                            .cornerRadius(18)
+                            .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
+                            .contentShape(Rectangle())
                         }
-                        .padding(14)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(MealioColors.oliveQuote)
-                        .cornerRadius(18)
-                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
-                    
-                    // Bottom Right Card: Dynamic Baking / Dessert Dish
-                    let bake = store.moodBakeRecipe
-                    Button(action: {
-                        selectedRecipeForNavigation = bake
-                    }) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            MealioImageView(bake.cardImageName)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 80)
-                                .clipped()
-                                .cornerRadius(12)
-                            
-                            Text(bake.title)
-                                .font(MealioFont.editorialTitle(size: 15))
-                                .foregroundColor(MealioColors.textPrimary)
-                                .lineLimit(1)
-                            
-                            Text("\(bake.totalTime) • \(bake.effort)")
-                                .font(.system(size: 11, weight: .regular))
-                                .foregroundColor(MealioColors.textSecondary)
-                        }
-                        .padding(10)
-                        .background(MealioColors.cardLight)
-                        .cornerRadius(18)
-                        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
                 }
-                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 20)
             }
         }
     }
     
-    // MARK: - Section 3: Short On Time. Not Taste.
+    // MARK: - Section 3: Short On Time. Not Taste. (Default Explore Rectangular Card, Horizontal Scroll)
     private var shortOnTimeSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("Short on time. Not taste.")
-                    .font(MealioFont.editorialTitle(size: 22))
-                    .foregroundColor(MealioColors.textPrimary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Short on time. Not taste.")
+                        .font(MealioFont.editorialTitle(size: 22))
+                        .foregroundColor(MealioColors.textPrimary)
+                    Text("Fast weeknight dinners ready in 20 minutes or less")
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(MealioColors.textSecondary)
+                }
                 
                 Spacer()
                 
@@ -523,50 +467,31 @@ public struct HomeView: View {
                 }
                 .buttonStyle(.plain)
             }
+            .padding(.horizontal, 20)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 14) {
                     ForEach(store.quickRecipes) { recipe in
-                        Button(action: {
-                            selectedRecipeForNavigation = recipe
-                        }) {
-                            HStack(spacing: 12) {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text(recipe.categoryBadge)
-                                        .font(MealioFont.eyebrow(size: 9))
-                                        .tracking(0.8)
-                                        .foregroundColor(MealioColors.textOlive)
-                                        .lineLimit(1)
-                                    
-                                    Text(recipe.title)
-                                        .font(MealioFont.editorialTitle(size: 16))
-                                        .foregroundColor(MealioColors.textPrimary)
-                                        .lineLimit(2)
-                                        .multilineTextAlignment(.leading)
-                                    
-                                    Text("\(recipe.totalTime) • \(recipe.effort)")
-                                        .font(.system(size: 11, weight: .regular))
-                                        .foregroundColor(MealioColors.textSecondary)
-                                }
-                                
-                                MealioImageView(recipe.cardImageName)
-                                    .frame(width: 80, height: 80)
-                                    .clipShape(Circle())
+                        RecipeCardView(
+                            recipe: recipe,
+                            isSaved: store.isRecipeSaved(recipe.id),
+                            onSelect: {
+                                store.recordVisitedRecipe(recipe)
+                                selectedRecipeForNavigation = recipe
+                            },
+                            onToggleSave: {
+                                store.toggleSave(recipe.id)
                             }
-                            .padding(16)
-                            .frame(width: 250, height: 120)
-                            .background(MealioColors.sageGreen)
-                            .cornerRadius(20)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
+                        )
+                        .frame(width: 175)
                     }
                 }
+                .padding(.horizontal, 20)
             }
         }
     }
     
-    // MARK: - Section 4: Cuisines of the World
+    // MARK: - Section 4: Cuisines of the World (Card Style previously in Short On Time)
     private var cuisinesOfTheWorldSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
@@ -591,38 +516,39 @@ public struct HomeView: View {
                             vm.activeCollectionSubtitle = cuisine.tagline
                             vm.activeCollectionRecipes = store.recipes(forCuisine: cuisine.name)
                         }) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                ZStack(alignment: .topTrailing) {
-                                    MealioImageView(cuisine.sampleImage)
-                                        .frame(width: 170, height: 105)
-                                        .cornerRadius(16)
-                                        .clipped()
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    HStack(spacing: 6) {
+                                        Text(cuisine.emoji)
+                                            .font(.system(size: 14))
+                                        Text("\(cuisine.count) RECIPES")
+                                            .font(MealioFont.eyebrow(size: 9))
+                                            .tracking(0.8)
+                                            .foregroundColor(MealioColors.textOlive)
+                                    }
                                     
-                                    Text(cuisine.emoji)
-                                        .font(.system(size: 18))
-                                        .padding(6)
-                                        .background(Color.white.opacity(0.9))
-                                        .clipShape(Circle())
-                                        .padding(6)
-                                }
-                                
-                                VStack(alignment: .leading, spacing: 2) {
                                     Text(cuisine.name)
-                                        .font(MealioFont.editorialTitle(size: 16))
+                                        .font(MealioFont.editorialTitle(size: 18))
                                         .foregroundColor(MealioColors.textPrimary)
+                                        .lineLimit(1)
                                     
-                                    Text("\(cuisine.count) recipes")
-                                        .font(.system(size: 11, weight: .medium))
-                                        .foregroundColor(MealioColors.terracotta)
+                                    Text(cuisine.tagline)
+                                        .font(.system(size: 11, weight: .regular))
+                                        .foregroundColor(MealioColors.textSecondary)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
                                 }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                MealioImageView(cuisine.sampleImage)
+                                    .frame(width: 75, height: 75)
+                                    .clipShape(Circle())
+                                    .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                             }
-                            .padding(10)
-                            .frame(width: 190)
-                            .background(
-                                RoundedRectangle(cornerRadius: 18)
-                                    .stroke(MealioColors.divider, lineWidth: 1)
-                                    .background(RoundedRectangle(cornerRadius: 18).fill(MealioColors.cardLight))
-                            )
+                            .padding(14)
+                            .frame(width: 260, height: 115)
+                            .background(MealioColors.sageGreen)
+                            .cornerRadius(20)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -694,6 +620,7 @@ public struct HomeView: View {
                         recipe: recipe,
                         isSaved: store.isRecipeSaved(recipe.id),
                         onSelect: {
+                            store.recordVisitedRecipe(recipe)
                             selectedRecipeForNavigation = recipe
                         },
                         onToggleSave: {
@@ -798,6 +725,7 @@ public struct HomeView: View {
                         recipe: recipe,
                         isSaved: store.isRecipeSaved(recipe.id),
                         onSelect: {
+                            store.recordVisitedRecipe(recipe)
                             selectedRecipeForNavigation = recipe
                         },
                         onToggleSave: {
