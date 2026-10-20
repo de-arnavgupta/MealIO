@@ -1,6 +1,68 @@
 import SwiftUI
 import Combine
 
+// MARK: - Section Header Liquid Glass Arrow Button
+public struct SectionHeaderArrowButton: View {
+    var action: () -> Void
+    
+    public init(action: @escaping () -> Void) {
+        self.action = action
+    }
+    
+    public var body: some View {
+        Button(action: {
+            HapticFeedback.light()
+            action()
+        }) {
+            ZStack {
+                Circle()
+                    .fill(.ultraThinMaterial)
+                
+                Circle()
+                    .fill(Color.white.opacity(0.72))
+                
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.50),
+                                Color.white.opacity(0.12),
+                                Color.clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.95),
+                                Color.white.opacity(0.45),
+                                Color.white.opacity(0.18),
+                                Color.white.opacity(0.65)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.9
+                    )
+                
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(MealioColors.terracotta)
+            }
+            .frame(width: 36, height: 36)
+            .shadow(color: Color(hex: 0x4A3B32, alpha: 0.05), radius: 5, x: 0, y: 2)
+            .contentShape(Rectangle())
+            .frame(minWidth: 44, minHeight: 44)
+        }
+        .buttonStyle(LiquidGlassPressStyle())
+        .accessibilityLabel("View collection")
+    }
+}
+
 public struct HomeScrollOffsetKey: PreferenceKey {
     public static var defaultValue: CGFloat = 0
     public static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
@@ -299,31 +361,18 @@ public struct HomeView: View {
     // MARK: - Section 1: The Evening Edit (Dynamic Carousel with daily rotating luxury dishes)
     private var eveningEditSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack {
+            HStack(alignment: .center) {
                 Text("The evening edit")
                     .font(MealioFont.editorialTitle(size: 22))
                     .foregroundColor(MealioColors.textPrimary)
                 
                 Spacer()
                 
-                Button(action: {
-                    HapticFeedback.light()
+                SectionHeaderArrowButton {
                     vm.activeCollectionTitle = "The Evening Edit"
                     vm.activeCollectionSubtitle = "Curated luxury dinners for tonight's table."
                     vm.activeCollectionRecipes = store.eveningEditRecipes
-                }) {
-                    HStack(spacing: 3) {
-                        Text("Explore")
-                            .font(.system(size: 12, weight: .semibold))
-                        Image(systemName: "arrow.up.right")
-                            .font(.system(size: 10, weight: .bold))
-                    }
-                    .foregroundColor(MealioColors.terracotta)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .liquidGlassCapsule()
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 20)
             
@@ -466,24 +515,11 @@ public struct HomeView: View {
                 
                 Spacer()
                 
-                Button(action: {
-                    HapticFeedback.light()
+                SectionHeaderArrowButton {
                     vm.activeCollectionTitle = "Last visited"
                     vm.activeCollectionSubtitle = "Recipes you recently explored."
                     vm.activeCollectionRecipes = store.lastVisitedRecipes
-                }) {
-                    HStack(spacing: 3) {
-                        Text("View all")
-                            .font(.system(size: 12, weight: .semibold))
-                        Image(systemName: "arrow.up.right")
-                            .font(.system(size: 10, weight: .bold))
-                    }
-                    .foregroundColor(MealioColors.terracotta)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .liquidGlassCapsule()
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 20)
             
@@ -527,24 +563,11 @@ public struct HomeView: View {
                 
                 Spacer()
                 
-                Button(action: {
-                    HapticFeedback.light()
+                SectionHeaderArrowButton {
                     vm.activeCollectionTitle = "Short on time. Not taste."
                     vm.activeCollectionSubtitle = "Fast weeknight dinners ready in 20 minutes or less."
                     vm.activeCollectionRecipes = store.quickRecipes
-                }) {
-                    HStack(spacing: 3) {
-                        Text("More")
-                            .font(.system(size: 12, weight: .semibold))
-                        Image(systemName: "arrow.up.right")
-                            .font(.system(size: 10, weight: .bold))
-                    }
-                    .foregroundColor(MealioColors.terracotta)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .liquidGlassCapsule()
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 20)
             
@@ -576,7 +599,7 @@ public struct HomeView: View {
     // MARK: - Section 4: Cuisines of the World (Card Style previously in Short On Time)
     private var cuisinesOfTheWorldSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack {
+            HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Cuisines of the world")
                         .font(MealioFont.editorialTitle(size: 22))
@@ -587,6 +610,12 @@ public struct HomeView: View {
                 }
                 
                 Spacer()
+                
+                SectionHeaderArrowButton {
+                    vm.activeCollectionTitle = "World Cuisines"
+                    vm.activeCollectionSubtitle = "Explore recipes across 10 authentic culinary traditions."
+                    vm.activeCollectionRecipes = store.allRecipes
+                }
             }
             .padding(.horizontal, 20)
             
