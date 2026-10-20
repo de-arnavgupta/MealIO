@@ -216,7 +216,7 @@ public struct GroceriesView: View {
     }
 }
 
-// MARK: - Dedicated Add Grocery Item Sheet
+// MARK: - Dedicated Add Grocery Item Sheet (Full Mealio Palette & High Contrast)
 public struct AddGroceryItemSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var store: RecipeStore
@@ -231,57 +231,55 @@ public struct AddGroceryItemSheet: View {
     
     public var body: some View {
         NavigationStack {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 20) {
                     // Item Name
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text("ITEM NAME")
-                            .font(.system(size: 11, weight: .bold))
-                            .tracking(0.6)
+                            .font(MealioFont.eyebrow(size: 11))
+                            .tracking(1.0)
                             .foregroundColor(MealioColors.textSecondary)
                         
-                        TextField("e.g. Sourdough loaf, Avocados, Oat milk", text: $vm.itemName)
-                            .font(.system(size: 16, weight: .medium))
+                        TextField("", text: $vm.itemName, prompt: Text("e.g. Sourdough loaf, Avocados, Oat milk").foregroundColor(MealioColors.textTertiary))
+                            .font(.system(size: 15, weight: .medium))
                             .foregroundColor(MealioColors.textPrimary)
+                            .tint(MealioColors.terracotta)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(MealioColors.cardLight)
-                            )
+                            .background(Color.white)
+                            .cornerRadius(16)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(MealioColors.divider, lineWidth: 1)
+                                    .stroke(Color(hex: 0xDCD5CB), lineWidth: 1.0)
                             )
                     }
                     
                     // Quantity & Unit
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text("QUANTITY (OPTIONAL)")
-                            .font(.system(size: 11, weight: .bold))
-                            .tracking(0.6)
+                            .font(MealioFont.eyebrow(size: 11))
+                            .tracking(1.0)
                             .foregroundColor(MealioColors.textSecondary)
                         
-                        TextField("e.g. 2 pcs, 500g, 1 bunch, 1 bottle", text: $vm.quantity)
-                            .font(.system(size: 16, weight: .medium))
+                        TextField("", text: $vm.quantity, prompt: Text("e.g. 2 pcs, 500g, 1 bunch, 1 bottle").foregroundColor(MealioColors.textTertiary))
+                            .font(.system(size: 15, weight: .medium))
                             .foregroundColor(MealioColors.textPrimary)
+                            .tint(MealioColors.terracotta)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(MealioColors.cardLight)
-                            )
+                            .background(Color.white)
+                            .cornerRadius(16)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(MealioColors.divider, lineWidth: 1)
+                                    .stroke(Color(hex: 0xDCD5CB), lineWidth: 1.0)
                             )
                     }
                     
                     // Aisle Category
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 8) {
                         Text("AISLE CATEGORY")
-                            .font(.system(size: 11, weight: .bold))
-                            .tracking(0.6)
+                            .font(MealioFont.eyebrow(size: 11))
+                            .tracking(1.0)
                             .foregroundColor(MealioColors.textSecondary)
                         
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -297,54 +295,76 @@ public struct AddGroceryItemSheet: View {
                                             .foregroundColor(isSelected ? .white : MealioColors.textPrimary)
                                             .padding(.horizontal, 14)
                                             .padding(.vertical, 8)
-                                            .liquidGlassCapsule(tint: isSelected ? MealioColors.terracotta : nil, isSelected: isSelected)
+                                            .background(
+                                                Capsule()
+                                                    .fill(isSelected ? MealioColors.terracotta : Color.white)
+                                            )
+                                            .overlay(
+                                                Capsule()
+                                                    .stroke(isSelected ? MealioColors.terracotta : Color(hex: 0xDCD5CB), lineWidth: 1.0)
+                                            )
+                                            .shadow(color: isSelected ? MealioColors.terracotta.opacity(0.25) : Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
                                     }
                                     .buttonStyle(LiquidGlassPressStyle())
                                 }
                             }
+                            .padding(.horizontal, 1)
+                            .padding(.vertical, 2)
                         }
                     }
                     
                     // Add Button
+                    let isInputEmpty = vm.itemName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                     Button(action: {
                         let trimmed = vm.itemName.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { return }
-                        HapticFeedback.medium()
+                        HapticFeedback.success()
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                             store.addCustomGroceryItem(name: trimmed, quantity: vm.quantity, aisleCategory: vm.selectedAisle)
                         }
                         dismiss()
                     }) {
-                        Text("Add to Groceries")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 18)
-                                    .fill(vm.itemName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? MealioColors.textTertiary.opacity(0.4) : MealioColors.terracotta)
-                            )
-                            .shadow(color: vm.itemName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.clear : MealioColors.terracotta.opacity(0.35), radius: 8, x: 0, y: 4)
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 15, weight: .bold))
+                            Text("Add to Groceries")
+                                .font(.system(size: 16, weight: .bold))
+                        }
+                        .foregroundColor(isInputEmpty ? MealioColors.textTertiary : .white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(isInputEmpty ? Color(hex: 0xECE6DC) : MealioColors.terracotta)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(isInputEmpty ? Color(hex: 0xDCD5CB) : Color.clear, lineWidth: 1.0)
+                        )
+                        .shadow(color: isInputEmpty ? Color.clear : MealioColors.terracotta.opacity(0.35), radius: 8, x: 0, y: 4)
                     }
-                    .disabled(vm.itemName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(isInputEmpty)
                     .buttonStyle(LiquidGlassPressStyle())
-                    .padding(.top, 10)
+                    .padding(.top, 8)
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 30)
+                .padding(.top, 16)
+                .padding(.bottom, 24)
             }
             .background(MealioColors.background.ignoresSafeArea())
-            .navigationTitle("Add Item")
+            .navigationTitle("Add Grocery Item")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        HapticFeedback.light()
                         dismiss()
                     }
-                    .foregroundColor(MealioColors.terracotta)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(MealioColors.textSecondary)
                 }
             }
         }
+        .preferredColorScheme(.light)
     }
 }

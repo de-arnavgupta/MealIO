@@ -15,46 +15,12 @@ public struct SectionHeaderArrowButton: View {
             action()
         }) {
             ZStack {
-                Circle()
-                    .fill(.ultraThinMaterial)
-                
-                Circle()
-                    .fill(Color.white.opacity(0.72))
-                
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.50),
-                                Color.white.opacity(0.12),
-                                Color.clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.95),
-                                Color.white.opacity(0.45),
-                                Color.white.opacity(0.18),
-                                Color.white.opacity(0.65)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.9
-                    )
-                
                 Image(systemName: "arrow.right")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(MealioColors.terracotta)
             }
             .frame(width: 36, height: 36)
-            .shadow(color: Color(hex: 0x4A3B32, alpha: 0.05), radius: 5, x: 0, y: 2)
+            .liquidGlassCircle(isClear: true)
             .contentShape(Rectangle())
             .frame(minWidth: 44, minHeight: 44)
         }
@@ -230,7 +196,7 @@ public struct HomeView: View {
                 ZStack(alignment: .bottom) {
                     Rectangle()
                         .fill(.ultraThinMaterial)
-                        .overlay(Color.white.opacity(0.18))
+                        .overlay(Color.white.opacity(0.08))
                         .ignoresSafeArea(edges: .top)
                     
                     Rectangle()
@@ -281,7 +247,11 @@ public struct HomeView: View {
                 let hasActiveFilter = store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil || store.dietaryFilter != nil
                 ZStack {
                     Circle()
-                        .fill(hasActiveFilter ? MealioColors.terracotta : Color.white.opacity(0.65))
+                        .fill(hasActiveFilter ? MealioColors.terracotta : Color.white.opacity(0.25))
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.40), lineWidth: 0.6)
+                        )
                         .frame(width: 30, height: 30)
                     
                     Image(systemName: "slider.horizontal.3")

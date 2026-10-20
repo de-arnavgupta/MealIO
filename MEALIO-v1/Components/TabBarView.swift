@@ -85,16 +85,16 @@ public struct CustomTabBar: View {
                                 // Fluid mercury glass indicator with double specular highlight
                                 ZStack {
                                     Capsule(style: .continuous)
-                                        .fill(MealioColors.terracottaLight.opacity(0.92))
+                                        .fill(MealioColors.terracotta.opacity(0.14))
                                     
                                     // Ambient caustic inner reflection
                                     Capsule(style: .continuous)
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    Color.white.opacity(0.50),
-                                                    Color.white.opacity(0.12),
-                                                    MealioColors.terracotta.opacity(0.08)
+                                                    Color.white.opacity(0.45),
+                                                    Color.white.opacity(0.10),
+                                                    MealioColors.terracotta.opacity(0.06)
                                                 ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
@@ -107,12 +107,12 @@ public struct CustomTabBar: View {
                                             LinearGradient(
                                                 colors: [
                                                     Color.white.opacity(0.85),
-                                                    MealioColors.terracotta.opacity(0.25)
+                                                    MealioColors.terracotta.opacity(0.30)
                                                 ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
                                             ),
-                                            lineWidth: 0.9
+                                            lineWidth: 0.8
                                         )
                                 }
                                 .padding(.horizontal, 4)
