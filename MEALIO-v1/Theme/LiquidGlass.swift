@@ -8,10 +8,12 @@ import UIKit
 public struct LiquidGlassModifier: ViewModifier {
     public var cornerRadius: CGFloat
     public var tint: Color?
+    public var isClear: Bool
     
-    public init(cornerRadius: CGFloat = 24, tint: Color? = nil) {
+    public init(cornerRadius: CGFloat = 24, tint: Color? = nil, isClear: Bool = false) {
         self.cornerRadius = cornerRadius
         self.tint = tint
+        self.isClear = isClear
     }
     
     public func body(content: Content) -> some View {
@@ -22,13 +24,13 @@ public struct LiquidGlassModifier: ViewModifier {
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                         .fill(.ultraThinMaterial)
                     
-                    // Luminous white foundation: brightens material so it harmonizes with warm ivory (#FBF9F4)
+                    // Luminous white foundation: adjusted for clarity
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(Color.white.opacity(0.68))
+                        .fill(Color.white.opacity(isClear ? 0.18 : 0.68))
                     
                     if let tint = tint {
                         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(tint.opacity(0.10))
+                            .fill(tint.opacity(isClear ? 0.08 : 0.10))
                     }
                     
                     // Living ambient specular sheen: light refraction across surface
@@ -36,10 +38,10 @@ public struct LiquidGlassModifier: ViewModifier {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.48),
-                                    Color.white.opacity(0.16),
+                                    Color.white.opacity(isClear ? 0.32 : 0.48),
+                                    Color.white.opacity(isClear ? 0.08 : 0.16),
                                     Color.clear,
-                                    Color.white.opacity(0.06)
+                                    Color.white.opacity(0.04)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -227,8 +229,8 @@ public struct HapticFeedback {
 }
 
 extension View {
-    public func liquidGlass(cornerRadius: CGFloat = 24, tint: Color? = nil) -> some View {
-        self.modifier(LiquidGlassModifier(cornerRadius: cornerRadius, tint: tint))
+    public func liquidGlass(cornerRadius: CGFloat = 24, tint: Color? = nil, isClear: Bool = false) -> some View {
+        self.modifier(LiquidGlassModifier(cornerRadius: cornerRadius, tint: tint, isClear: isClear))
     }
     
     public func liquidGlassCapsule(tint: Color? = nil, isSelected: Bool = false) -> some View {

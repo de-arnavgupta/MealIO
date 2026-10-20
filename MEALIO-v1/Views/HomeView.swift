@@ -28,17 +28,13 @@ public struct HomeView: View {
     public var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 24) {
-                // Header: Wordmark & Avatar
-                headerView
-                    .padding(.horizontal, 20)
-                    .padding(.top, 10)
-                
                 // Hero Headline: "Make tonight something special."
                 Text("Make tonight\nsomething special.")
                     .font(MealioFont.editorialHero(size: 34))
                     .foregroundColor(MealioColors.textPrimary)
                     .lineSpacing(4)
                     .padding(.horizontal, 20)
+                    .padding(.top, 16)
                 
                 // Search & Filter Bar
                 searchBar
@@ -93,12 +89,6 @@ public struct HomeView: View {
                 .presentationCornerRadius(32)
                 .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.52)))
         }
-        .sheet(isPresented: $vm.showingProfileSheet) {
-            UserProfileSheet(store: store)
-                .presentationDetents([.fraction(0.65), .large])
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(32)
-        }
         .sheet(isPresented: $vm.showingWisdomSheet) {
             KitchenWisdomSheet(activeWisdom: store.activeWisdom)
                 .presentationDetents([.fraction(0.72), .large])
@@ -121,44 +111,6 @@ public struct HomeView: View {
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(32)
             }
-        }
-    }
-    
-    // MARK: - Header
-    private var headerView: some View {
-        HStack(alignment: .center) {
-            Text("Meal-IO")
-                .font(MealioFont.brandLogo(size: 28))
-                .foregroundColor(MealioColors.textPrimary)
-            
-            Spacer()
-            
-            Button(action: {
-                vm.showingProfileSheet = true
-            }) {
-                HStack(spacing: 10) {
-                    VStack(alignment: .trailing, spacing: 1) {
-                        Text("A little inspiration for")
-                            .font(.system(size: 11, weight: .regular))
-                            .foregroundColor(MealioColors.textSecondary)
-                        Text("your kitchen, Alex")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(MealioColors.textPrimary)
-                    }
-                    
-                    ZStack {
-                        Circle()
-                            .fill(MealioColors.peachCard)
-                            .frame(width: 36, height: 36)
-                        
-                        Text("A")
-                            .font(MealioFont.brandLogo(size: 16))
-                            .foregroundColor(MealioColors.terracotta)
-                    }
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
         }
     }
     

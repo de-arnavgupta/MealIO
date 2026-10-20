@@ -32,8 +32,8 @@ struct ContentView: View {
                         GroceriesView(
                             store: vm.store
                         )
-                    case .myKitchen:
-                        MyKitchenView(
+                    case .profile:
+                        ProfileView(
                             store: vm.store
                         )
                     }

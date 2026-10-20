@@ -8,8 +8,8 @@ public struct CardPalette: Equatable {
     public let subtleTextColor: Color
     
     public static let fallback = CardPalette(
-        backgroundColor: Color(red: 0.94, green: 0.90, blue: 0.86), // warm soft peach/cream
-        textColor: Color(red: 0.65, green: 0.32, blue: 0.22),       // deep rich terracotta
+        backgroundColor: Color(red: 0.94, green: 0.90, blue: 0.86),
+        textColor: Color(red: 0.65, green: 0.32, blue: 0.22),
         subtleTextColor: Color(red: 0.65, green: 0.32, blue: 0.22).opacity(0.85)
     )
 }

@@ -4,14 +4,14 @@ public enum MainTab: String, CaseIterable {
     case discover = "Discover"
     case saved = "Saved"
     case groceries = "Groceries"
-    case myKitchen = "My kitchen"
+    case profile = "Profile"
     
     var iconName: String {
         switch self {
         case .discover: return "safari"
         case .saved: return "bookmark"
         case .groceries: return "basket"
-        case .myKitchen: return "fork.knife"
+        case .profile: return "person.crop.circle"
         }
     }
     
@@ -20,7 +20,7 @@ public enum MainTab: String, CaseIterable {
         case .discover: return "safari.fill"
         case .saved: return "bookmark.fill"
         case .groceries: return "basket.fill"
-        case .myKitchen: return "fork.knife"
+        case .profile: return "person.crop.circle.fill"
         }
     }
 }
@@ -121,7 +121,7 @@ public struct CustomTabBar: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        .liquidGlass(cornerRadius: 32)
+        .liquidGlass(cornerRadius: 32, isClear: true)
         .padding(.horizontal, 18)
         .padding(.bottom, 12)
     }

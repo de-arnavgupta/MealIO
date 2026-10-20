@@ -46,6 +46,25 @@ public struct RecipeCardView: View {
                     )
                     .frame(height: 44)
                 }
+                .overlay(alignment: .topTrailing) {
+                    if let onToggleSave = onToggleSave {
+                        Button(action: {
+                            HapticFeedback.light()
+                            onToggleSave()
+                        }) {
+                            Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(isSaved ? MealioColors.terracottaLight : .white)
+                                .symbolEffect(.bounce, value: isSaved)
+                                .padding(7)
+                                .background(Color.black.opacity(0.40))
+                                .clipShape(Circle())
+                                .shadow(color: Color.black.opacity(0.18), radius: 4, x: 0, y: 2)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(8)
+                    }
+                }
                 
                 // Centered dynamic editorial text area with rigid baseline alignment
                 VStack(spacing: 0) {
