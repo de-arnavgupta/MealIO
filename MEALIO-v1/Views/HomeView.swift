@@ -182,7 +182,7 @@ public struct HomeView: View {
                         .font(.system(size: 34, weight: .bold))
                         .foregroundColor(MealioColors.terracotta)
                         .frame(width: 72, height: 72)
-                        .glassEffect(.clear.tint(MealioColors.terracotta), in: .circle)
+                        .glassEffect(.clear.tint(MealioColors.terracotta).interactive(), in: .circle)
                         .shadow(color: Color.black.opacity(0.10), radius: 10, x: 0, y: 4)
                         .padding(.trailing, 75)
                         .transition(.scale(scale: 0.85).combined(with: .opacity))
@@ -857,7 +857,7 @@ public struct HomeView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 3)
-        .glassEffect(.clear, in: .capsule)
+        .glassEffect(.clear.interactive(), in: .capsule)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in

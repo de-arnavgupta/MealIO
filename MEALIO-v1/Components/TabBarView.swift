@@ -41,7 +41,8 @@ public struct CustomTabBar: View {
     public var body: some View {
         GlassEffectContainer(spacing: 10) {
             HStack(spacing: 10) {
-                // 3-Nav Tab Bar Dock
+                
+                // 1. 3-Nav Tab Bar Dock
                 HStack(spacing: 0) {
                     ForEach(MainTab.allCases, id: \.self) { tab in
                         let isSelected = selectedTab == tab
@@ -96,9 +97,9 @@ public struct CustomTabBar: View {
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
-                .glassEffect(.clear, in: .capsule)
+                .glassEffect(.clear.interactive(), in: .capsule)
                 
-                // Standalone Floating Circular Add Recipe Button
+                // 2. Standalone Floating Circular Add Recipe Button
                 Button(action: {
                     HapticFeedback.medium()
                     onAddRecipe()
@@ -107,7 +108,7 @@ public struct CustomTabBar: View {
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(MealioColors.textPrimary)
                         .frame(width: 56, height: 56)
-                        .glassEffect(.clear, in: .circle)
+                        .glassEffect(.clear.interactive(), in: .circle)
                 }
                 .buttonStyle(LiquidGlassPressStyle())
             }
