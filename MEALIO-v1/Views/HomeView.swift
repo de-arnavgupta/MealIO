@@ -338,8 +338,8 @@ public struct HomeView: View {
                         .foregroundColor(MealioColors.terracotta)
                 }
             }
-            .padding(.horizontal, store.savedRecipeIds.isEmpty ? 14 : 13)
-            .frame(height: 48)
+            .frame(width: store.savedRecipeIds.isEmpty ? 48 : nil, height: 48)
+            .padding(.horizontal, store.savedRecipeIds.isEmpty ? 0 : 14)
             .liquidGlass(
                 cornerRadius: 24,
                 tint: store.savedRecipeIds.isEmpty ? nil : MealioColors.terracottaLight.opacity(0.4),

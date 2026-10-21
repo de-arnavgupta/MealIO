@@ -1,11 +1,21 @@
 import SwiftUI
 import Combine
 
+public struct GroceriesScrollOffsetKey: PreferenceKey {
+    public static var defaultValue: CGFloat = 0
+    public static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 public class GroceriesViewModel: ObservableObject {
     @Published public var showingAddGrocerySheet: Bool = false
     @Published public var itemName: String = ""
     @Published public var quantity: String = ""
     @Published public var selectedAisle: String = "Produce"
+    @Published public var searchText: String = ""
+    @Published public var isScrolled: Bool = false
+    @Published public var showingClearConfirmDialog: Bool = false
     
     public init() {}
     
@@ -24,195 +34,320 @@ public struct GroceriesView: View {
         self.store = store
     }
     
+    private var filteredGroceryItems: [Ingredient] {
+        let query = vm.searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if query.isEmpty {
+            return store.groceryItems
+        }
+        return store.groceryItems.filter {
+            $0.name.lowercased().contains(query) ||
+            $0.aisleCategory.lowercased().contains(query) ||
+            ($0.note?.lowercased().contains(query) ?? false)
+        }
+    }
+    
     public var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack(alignment: .bottom) {
+        ScrollView(showsIndicators: false) {
+            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                // Scroll tracker
+                GeometryReader { proxy in
+                    let minY = proxy.frame(in: .named("groceriesScrollSpace")).minY
+                    Color.clear.preference(key: GroceriesScrollOffsetKey.self, value: minY)
+                }
+                .frame(height: 0)
+                
+                // Hero Headline (moves up on scroll just like explore page)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Groceries.")
-                        .font(MealioFont.editorialHero(size: 32))
+                        .font(MealioFont.editorialHero(size: 26))
                         .foregroundColor(MealioColors.textPrimary)
                     
                     Text("\(store.groceryItems.count) items ready for \(store.groceryDestination).")
-                        .font(.system(size: 14, weight: .regular))
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundColor(MealioColors.textSecondary)
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 14)
+                .padding(.bottom, 8)
                 
-                Spacer()
-                
-                HStack(spacing: 8) {
-                    // Direct Add Grocery Item Button
-                    Button(action: {
-                        HapticFeedback.light()
-                        vm.resetInput()
-                        vm.showingAddGrocerySheet = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 36, height: 36)
-                            .background(MealioColors.terracotta)
-                            .clipShape(Circle())
-                            .shadow(color: MealioColors.terracotta.opacity(0.32), radius: 6, x: 0, y: 2)
-                    }
-                    .buttonStyle(LiquidGlassPressStyle())
-                    .accessibilityLabel("Add grocery item")
-                    
-                    if !store.groceryItems.isEmpty {
-                        Menu {
-                            if !store.checkedGroceryItemIds.isEmpty {
-                                Button(action: {
-                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                        store.clearCheckedGroceryItems()
-                                        HapticFeedback.light()
-                                    }
-                                }) {
-                                    Label("Remove Checked Items (\(store.checkedGroceryItemIds.count))", systemImage: "checkmark.circle")
+                // Sticky Header: Search Bar + Direct Add Grocery + Direct Trash All
+                Section {
+                    VStack(alignment: .leading, spacing: 14) {
+                        if store.groceryItems.isEmpty {
+                            emptyState
+                        } else if filteredGroceryItems.isEmpty {
+                            noSearchResultsState
+                        } else {
+                            VStack(spacing: 10) {
+                                ForEach(filteredGroceryItems) { item in
+                                    groceryItemCard(item: item)
                                 }
                             }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 14)
                             
-                            Button(role: .destructive, action: {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                    for item in store.groceryItems {
-                                        store.removeGroceryItem(id: item.id)
-                                    }
-                                    HapticFeedback.medium()
-                                }
-                            }) {
-                                Label("Clear All Items", systemImage: "trash")
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                                .font(.system(size: 22))
-                                .foregroundColor(MealioColors.textSecondary)
-                                .padding(8)
+                            // Bottom spacing for tab bar
+                            Spacer()
+                                .frame(height: 80)
                         }
                     }
+                } header: {
+                    stickyBar
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
-            
-            if store.groceryItems.isEmpty {
-                VStack(spacing: 14) {
-                    Spacer()
-                    Image(systemName: "basket")
-                        .font(.system(size: 46))
-                        .foregroundColor(MealioColors.textTertiary)
-                    Text("Your grocery basket is empty")
-                        .font(MealioFont.editorialTitle(size: 18))
-                        .foregroundColor(MealioColors.textPrimary)
-                    Text("Add ingredients from recipes or add custom items directly.")
-                        .font(.system(size: 13))
-                        .foregroundColor(MealioColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-                    
-                    Button(action: {
-                        HapticFeedback.light()
-                        vm.resetInput()
-                        vm.showingAddGrocerySheet = true
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 13, weight: .bold))
-                            Text("Add Item")
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .background(MealioColors.terracotta)
-                        .clipShape(Capsule())
-                        .shadow(color: MealioColors.terracotta.opacity(0.30), radius: 8, x: 0, y: 4)
-                    }
-                    .buttonStyle(LiquidGlassPressStyle())
-                    .padding(.top, 4)
-                    
-                    Spacer()
+        }
+        .coordinateSpace(name: "groceriesScrollSpace")
+        .onPreferenceChange(GroceriesScrollOffsetKey.self) { minY in
+            let scrolled = minY < -15
+            if vm.isScrolled != scrolled {
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    vm.isScrolled = scrolled
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                List {
-                    ForEach(store.groceryItems) { item in
-                        let isChecked = store.checkedGroceryItemIds.contains(item.id)
-                        
-                        Button(action: {
-                            HapticFeedback.light()
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
-                                store.toggleGroceryItemChecked(id: item.id)
-                            }
-                        }) {
-                            HStack(spacing: 14) {
-                                Image(systemName: isChecked ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: 20, weight: .medium))
-                                    .foregroundColor(isChecked ? MealioColors.successGreen : MealioColors.terracotta)
-                                    .symbolEffect(.bounce, value: isChecked)
-                                
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(item.name)
-                                        .font(.system(size: 15, weight: .medium))
-                                        .strikethrough(isChecked, color: MealioColors.textTertiary)
-                                        .foregroundColor(isChecked ? MealioColors.textTertiary : MealioColors.textPrimary)
-                                    
-                                    if let note = item.note {
-                                        Text(note)
-                                            .font(.system(size: 11))
-                                            .foregroundColor(MealioColors.textTertiary)
-                                    }
-                                }
-                                
-                                Spacer()
-                                
-                                Text(item.formattedQuantity(forServings: 2, baseServings: 2))
-                                    .font(.system(size: 14, weight: .regular))
-                                    .foregroundColor(isChecked ? MealioColors.textTertiary : MealioColors.textSecondary)
-                            }
-                            .padding(.vertical, 6)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .listRowBackground(MealioColors.background)
-                        .listRowSeparatorTint(MealioColors.divider)
-                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                            Button {
-                                HapticFeedback.light()
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
-                                    store.toggleGroceryItemChecked(id: item.id)
-                                }
-                            } label: {
-                                Label(
-                                    isChecked ? "Uncheck" : "Check Off",
-                                    systemImage: isChecked ? "arrow.uturn.backward" : "checkmark"
-                                )
-                            }
-                            .tint(MealioColors.successGreen)
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                HapticFeedback.medium()
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                    store.removeGroceryItem(id: item.id)
-                                }
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                    }
-                }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .padding(.bottom, 80) // bottom inset for floating tab bar dock
             }
         }
         .background(MealioColors.background.ignoresSafeArea())
+        .confirmationDialog(
+            "Delete all grocery items?",
+            isPresented: $vm.showingClearConfirmDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Delete All Items", role: .destructive) {
+                HapticFeedback.medium()
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                    for item in store.groceryItems {
+                        store.removeGroceryItem(id: item.id)
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
         .sheet(isPresented: $vm.showingAddGrocerySheet) {
             AddGroceryItemSheet(store: store, vm: vm)
                 .presentationDetents([.fraction(0.55), .medium])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(30)
         }
+    }
+    
+    // MARK: - Sticky Search Bar & Actions in One Horizontal Line
+    private var stickyBar: some View {
+        HStack(spacing: 8) {
+            searchBar
+            addGroceryButton
+            if !store.groceryItems.isEmpty {
+                trashAllButton
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, vm.isScrolled ? 10 : 4)
+        .padding(.bottom, 10)
+        .frame(maxWidth: .infinity)
+        .background {
+            if vm.isScrolled {
+                Rectangle()
+                    .fill(Color.clear)
+                    .glassEffect(.regular, in: .rect)
+                    .ignoresSafeArea(edges: .top)
+                    .transition(.opacity)
+            }
+        }
+    }
+    
+    // MARK: - Search Bar (Liquid Glass)
+    private var searchBar: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.black)
+            
+            TextField(
+                "",
+                text: $vm.searchText,
+                prompt: Text("Search groceries...").foregroundColor(.black)
+            )
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(.black)
+            .tint(MealioColors.terracotta)
+            
+            if !vm.searchText.isEmpty {
+                Button(action: {
+                    HapticFeedback.light()
+                    vm.searchText = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(MealioColors.textTertiary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(height: 48)
+        .liquidGlass(cornerRadius: 24, isClear: vm.isScrolled)
+    }
+    
+    // MARK: - Add Grocery Button (Liquid Glass)
+    private var addGroceryButton: some View {
+        Button(action: {
+            HapticFeedback.light()
+            vm.resetInput()
+            vm.showingAddGrocerySheet = true
+        }) {
+            Image(systemName: "plus")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(MealioColors.textPrimary)
+                .frame(width: 48, height: 48)
+                .liquidGlass(cornerRadius: 24, isClear: vm.isScrolled)
+        }
+        .buttonStyle(LiquidGlassPressStyle())
+        .accessibilityLabel("Add grocery item")
+    }
+    
+    // MARK: - Trash All Button (Liquid Glass)
+    private var trashAllButton: some View {
+        Button(action: {
+            HapticFeedback.medium()
+            vm.showingClearConfirmDialog = true
+        }) {
+            Image(systemName: "trash")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(MealioColors.terracotta)
+                .frame(width: 48, height: 48)
+                .liquidGlass(cornerRadius: 24, isClear: vm.isScrolled)
+        }
+        .buttonStyle(LiquidGlassPressStyle())
+        .accessibilityLabel("Delete all groceries")
+    }
+    
+    // MARK: - Grocery Item Card
+    private func groceryItemCard(item: Ingredient) -> some View {
+        let isChecked = store.checkedGroceryItemIds.contains(item.id)
+        
+        return HStack(spacing: 14) {
+            Button(action: {
+                HapticFeedback.light()
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
+                    store.toggleGroceryItemChecked(id: item.id)
+                }
+            }) {
+                Image(systemName: isChecked ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundColor(isChecked ? MealioColors.successGreen : MealioColors.terracotta)
+                    .symbolEffect(.bounce, value: isChecked)
+            }
+            .buttonStyle(.plain)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name)
+                    .font(.system(size: 15, weight: .semibold))
+                    .strikethrough(isChecked, color: MealioColors.textTertiary)
+                    .foregroundColor(isChecked ? MealioColors.textTertiary : MealioColors.textPrimary)
+                
+                HStack(spacing: 6) {
+                    Text(item.aisleCategory.uppercased())
+                        .font(MealioFont.eyebrow(size: 9))
+                        .tracking(0.8)
+                        .foregroundColor(MealioColors.textOlive)
+                    
+                    if let note = item.note, !note.isEmpty {
+                        Text("•")
+                            .font(.system(size: 8))
+                            .foregroundColor(MealioColors.textTertiary)
+                        Text(note)
+                            .font(.system(size: 11))
+                            .foregroundColor(MealioColors.textTertiary)
+                            .lineLimit(1)
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            Text(item.formattedQuantity(forServings: 2, baseServings: 2))
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(isChecked ? MealioColors.textTertiary : MealioColors.textSecondary)
+            
+            Button(action: {
+                HapticFeedback.light()
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                    store.removeGroceryItem(id: item.id)
+                }
+            }) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(MealioColors.textTertiary)
+                    .frame(width: 28, height: 28)
+                    .background(Color.black.opacity(0.04))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(LiquidGlassPressStyle())
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+    }
+    
+    // MARK: - Empty States
+    private var emptyState: some View {
+        VStack(spacing: 14) {
+            Spacer().frame(height: 40)
+            Image(systemName: "basket")
+                .font(.system(size: 46))
+                .foregroundColor(MealioColors.textTertiary)
+            Text("Your grocery basket is empty")
+                .font(MealioFont.editorialTitle(size: 18))
+                .foregroundColor(MealioColors.textPrimary)
+            Text("Add ingredients from recipes or add custom items directly.")
+                .font(.system(size: 13))
+                .foregroundColor(MealioColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+            
+            Button(action: {
+                HapticFeedback.light()
+                vm.resetInput()
+                vm.showingAddGrocerySheet = true
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .bold))
+                    Text("Add Item")
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .background(MealioColors.terracotta)
+                .clipShape(Capsule())
+                .shadow(color: MealioColors.terracotta.opacity(0.30), radius: 8, x: 0, y: 4)
+            }
+            .buttonStyle(LiquidGlassPressStyle())
+            .padding(.top, 4)
+            
+            Spacer().frame(height: 60)
+        }
+        .frame(maxWidth: .infinity)
+    }
+    
+    private var noSearchResultsState: some View {
+        VStack(spacing: 10) {
+            Spacer().frame(height: 40)
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 32))
+                .foregroundColor(MealioColors.textTertiary)
+            Text("No items matched \"\(vm.searchText)\"")
+                .font(MealioFont.editorialTitle(size: 16))
+                .foregroundColor(MealioColors.textPrimary)
+            Text("Check your spelling or add a new grocery item.")
+                .font(.system(size: 13))
+                .foregroundColor(MealioColors.textSecondary)
+            Spacer().frame(height: 60)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
     }
 }
 
