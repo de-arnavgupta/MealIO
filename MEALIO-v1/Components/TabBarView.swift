@@ -26,7 +26,6 @@ public struct CustomTabBar: View {
     @Binding var selectedTab: MainTab
     var groceryCount: Int = 0
     var onAddRecipe: () -> Void = {}
-    @Namespace private var tabNamespace
     
     public init(
         selectedTab: Binding<MainTab>,
@@ -82,16 +81,6 @@ public struct CustomTabBar: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
-                            .background {
-                                if isSelected {
-                                    Capsule(style: .continuous)
-                                        .fill(Color.clear)
-                                        .glassEffect(.regular.tint(MealioColors.terracotta).interactive(), in: .capsule)
-                                        .padding(.horizontal, 4)
-                                        .padding(.vertical, 2)
-                                        .matchedGeometryEffect(id: "activeTabIndicator", in: tabNamespace)
-                                }
-                            }
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(LiquidGlassPressStyle())
