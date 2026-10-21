@@ -25,86 +25,64 @@ public enum MainTab: String, CaseIterable {
 public struct CustomTabBar: View {
     @Binding var selectedTab: MainTab
     var groceryCount: Int = 0
-    var onAddRecipe: () -> Void = {}
     
     public init(
         selectedTab: Binding<MainTab>,
-        groceryCount: Int = 0,
-        onAddRecipe: @escaping () -> Void = {}
+        groceryCount: Int = 0
     ) {
         self._selectedTab = selectedTab
         self.groceryCount = groceryCount
-        self.onAddRecipe = onAddRecipe
     }
     
     public var body: some View {
-        GlassEffectContainer(spacing: 10) {
-            HStack(spacing: 10) {
-                
-                // 1. 3-Nav Tab Bar Dock
-                HStack(spacing: 0) {
-                    ForEach(MainTab.allCases, id: \.self) { tab in
-                        let isSelected = selectedTab == tab
-                        Button(action: {
-                            HapticFeedback.light()
-                            withAnimation(.spring(response: 0.36, dampingFraction: 0.70)) {
-                                selectedTab = tab
-                            }
-                        }) {
-                            VStack(spacing: 3) {
-                                ZStack(alignment: .topTrailing) {
-                                    Image(systemName: isSelected ? tab.selectedIconName : tab.iconName)
-                                        .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
-                                        .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
-                                        .scaleEffect(isSelected ? 1.10 : 0.94)
-                                        .symbolEffect(.bounce, value: isSelected)
-                                        .animation(.spring(response: 0.34, dampingFraction: 0.65), value: isSelected)
-                                        .frame(height: 24)
-                                    
-                                    if tab == .groceries && groceryCount > 0 {
-                                        Text("\(groceryCount)")
-                                            .font(.system(size: 10, weight: .bold))
-                                            .foregroundColor(.white)
-                                            .padding(.horizontal, 5)
-                                            .padding(.vertical, 1.5)
-                                            .background(MealioColors.terracotta)
-                                            .clipShape(Capsule())
-                                            .offset(x: 12, y: -4)
-                                            .transition(.scale.combined(with: .opacity))
-                                    }
-                                }
-                                
-                                Text(tab.rawValue)
-                                    .font(.system(size: 11, weight: isSelected ? .bold : .medium))
-                                    .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
-                                    .scaleEffect(isSelected ? 1.04 : 0.98)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(LiquidGlassPressStyle())
-                    }
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .glassEffect(.regular.interactive(), in: .capsule)
-                
-                // 2. Standalone Floating Circular Add Recipe Button
+        HStack(spacing: 0) {
+            ForEach(MainTab.allCases, id: \.self) { tab in
+                let isSelected = selectedTab == tab
                 Button(action: {
-                    HapticFeedback.medium()
-                    onAddRecipe()
+                    HapticFeedback.light()
+                    withAnimation(.spring(response: 0.36, dampingFraction: 0.70)) {
+                        selectedTab = tab
+                    }
                 }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(MealioColors.textPrimary)
-                        .frame(width: 56, height: 56)
-                        .glassEffect(.regular.interactive(), in: .circle)
+                    VStack(spacing: 3) {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: isSelected ? tab.selectedIconName : tab.iconName)
+                                .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
+                                .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
+                                .scaleEffect(isSelected ? 1.10 : 0.94)
+                                .symbolEffect(.bounce, value: isSelected)
+                                .animation(.spring(response: 0.34, dampingFraction: 0.65), value: isSelected)
+                                .frame(height: 24)
+                            
+                            if tab == .groceries && groceryCount > 0 {
+                                Text("\(groceryCount)")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 1.5)
+                                    .background(MealioColors.terracotta)
+                                    .clipShape(Capsule())
+                                    .offset(x: 12, y: -4)
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                        }
+                        
+                        Text(tab.rawValue)
+                            .font(.system(size: 11, weight: isSelected ? .bold : .medium))
+                            .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
+                            .scaleEffect(isSelected ? 1.04 : 0.98)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(LiquidGlassPressStyle())
             }
         }
-        .padding(.horizontal, 18)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 6)
+        .glassEffect(.regular.interactive(), in: .capsule)
+        .padding(.horizontal, 24)
         .padding(.bottom, 12)
     }
 }

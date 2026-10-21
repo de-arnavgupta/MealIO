@@ -22,7 +22,10 @@ struct ContentView: View {
                     case .discover:
                         HomeView(
                             store: vm.store,
-                            selectedRecipeForNavigation: $vm.selectedRecipeForNavigation
+                            selectedRecipeForNavigation: $vm.selectedRecipeForNavigation,
+                            onAddRecipe: {
+                                vm.showingAddRecipeSheet = true
+                            }
                         )
                         .transition(.asymmetric(
                             insertion: .opacity.combined(with: .scale(scale: 0.985)),
@@ -72,10 +75,7 @@ struct ContentView: View {
                     
                     CustomTabBar(
                         selectedTab: $vm.selectedTab,
-                        groceryCount: vm.store.groceryItems.count,
-                        onAddRecipe: {
-                            vm.showingAddRecipeSheet = true
-                        }
+                        groceryCount: vm.store.groceryItems.count
                     )
                 }
                 .animation(.spring(response: 0.38, dampingFraction: 0.72), value: vm.store.activeCookingSession != nil)

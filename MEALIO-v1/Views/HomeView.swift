@@ -74,11 +74,17 @@ public class HomeViewModel: ObservableObject {
 public struct HomeView: View {
     @ObservedObject var store: RecipeStore
     @Binding var selectedRecipeForNavigation: Recipe?
+    var onAddRecipe: () -> Void = {}
     @StateObject private var vm = HomeViewModel()
     
-    public init(store: RecipeStore, selectedRecipeForNavigation: Binding<Recipe?>) {
+    public init(
+        store: RecipeStore,
+        selectedRecipeForNavigation: Binding<Recipe?>,
+        onAddRecipe: @escaping () -> Void = {}
+    ) {
         self.store = store
         self._selectedRecipeForNavigation = selectedRecipeForNavigation
+        self.onAddRecipe = onAddRecipe
     }
     
     public var body: some View {
@@ -228,11 +234,12 @@ public struct HomeView: View {
         }
     }
     
-    // MARK: - Sticky Search Bar & Save in One Horizontal Line
+    // MARK: - Sticky Search Bar & Actions in One Horizontal Line
     private var stickySearchAndSaveBar: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             searchBar
             savedButton
+            addRecipeButton
         }
         .padding(.horizontal, 20)
         .padding(.top, vm.isScrolled ? 10 : 4)
@@ -340,6 +347,25 @@ public struct HomeView: View {
             )
         }
         .buttonStyle(LiquidGlassPressStyle())
+    }
+    
+    // MARK: - Add Recipe Button (Liquid Glass)
+    private var addRecipeButton: some View {
+        Button(action: {
+            HapticFeedback.light()
+            onAddRecipe()
+        }) {
+            Image(systemName: "plus")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(MealioColors.textPrimary)
+                .frame(width: 48, height: 48)
+                .liquidGlass(
+                    cornerRadius: 24,
+                    isClear: vm.isScrolled
+                )
+        }
+        .buttonStyle(LiquidGlassPressStyle())
+        .accessibilityLabel("Add recipe")
     }
     
     // MARK: - Category Filter Pills (Liquid Glass)
