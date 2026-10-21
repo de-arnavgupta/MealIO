@@ -2,9 +2,9 @@ import SwiftUI
 import UIKit
 
 // MARK: - Native Apple Liquid Glass (iOS 26+ .glassEffect() API)
-// Uses SwiftUI's built-in .glassEffect() modifier — the actual system-level
-// liquid glass with real-time refraction, transparency, specular highlights,
-// and device-motion lighting. No manual materials, no gradients, no painted backgrounds.
+// Uses SwiftUI's built-in .glassEffect() modifier with .clear configuration:
+// High transparency, minimal blur, true liquid light refraction, specular highlights,
+// and device-motion lighting. No manual materials, no gradients, no white or painted backgrounds.
 
 // MARK: - View Modifiers wrapping native .glassEffect()
 
@@ -22,10 +22,10 @@ public struct LiquidGlassModifier: ViewModifier {
     public func body(content: Content) -> some View {
         if let tint = tint {
             content
-                .glassEffect(.regular.tint(tint), in: .rect(cornerRadius: cornerRadius))
+                .glassEffect(.clear.tint(tint), in: .rect(cornerRadius: cornerRadius))
         } else {
             content
-                .glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
+                .glassEffect(.clear, in: .rect(cornerRadius: cornerRadius))
         }
     }
 }
@@ -42,13 +42,13 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
     public func body(content: Content) -> some View {
         if isSelected {
             content
-                .glassEffect(.regular.tint(tint ?? MealioColors.terracotta), in: .capsule)
+                .glassEffect(.clear.tint(tint ?? MealioColors.terracotta), in: .capsule)
         } else if let tint = tint {
             content
-                .glassEffect(.regular.tint(tint), in: .capsule)
+                .glassEffect(.clear.tint(tint), in: .capsule)
         } else {
             content
-                .glassEffect(.regular, in: .capsule)
+                .glassEffect(.clear, in: .capsule)
         }
     }
 }
@@ -67,13 +67,13 @@ public struct LiquidGlassCircleModifier: ViewModifier {
     public func body(content: Content) -> some View {
         if isSelected, let tint = tint {
             content
-                .glassEffect(.regular.tint(tint), in: .circle)
+                .glassEffect(.clear.tint(tint), in: .circle)
         } else if let tint = tint {
             content
-                .glassEffect(.regular.tint(tint), in: .circle)
+                .glassEffect(.clear.tint(tint), in: .circle)
         } else {
             content
-                .glassEffect(.regular, in: .circle)
+                .glassEffect(.clear, in: .circle)
         }
     }
 }

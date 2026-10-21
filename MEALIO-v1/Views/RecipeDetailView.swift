@@ -653,10 +653,7 @@ public struct RecipeDetailView: View {
             .padding(.horizontal, 20)
             .padding(.top, 12)
             .padding(.bottom, 20)
-            .background(
-                Rectangle()
-                    .fill(.regularMaterial)
-            )
+            .glassEffect(.clear, in: .rect)
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }

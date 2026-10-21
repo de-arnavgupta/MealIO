@@ -133,7 +133,7 @@ public struct HomeView: View {
                                         cuisinesOfTheWorldSection
                                         
                                         // Section 5: "Explore All Recipes" (With Alphabetical Cuisine Filter & Contacts Scroller)
-                                        exploreAllRecipesSection
+                                        exploreAllRecipesSection(scrollProxy: scrollProxy)
                                     }
                                 }
                                 
@@ -176,21 +176,13 @@ public struct HomeView: View {
                     }
                 }
                 
-                // Floating Side Alphabet Scroller (pinned to right edge, moves highlight as recipes scroll)
-                if shouldShowAlphabetScroller {
-                    floatingAlphabetScroller(availableLetters: availableLettersSet, scrollProxy: scrollProxy)
-                        .padding(.trailing, 4)
-                        .padding(.bottom, 60)
-                        .transition(.opacity)
-                }
-                
                 // Floating Alphabet Magnifier HUD during scrubbing
                 if let letter = vm.activeScrubLetter {
                     Text(letter)
                         .font(.system(size: 34, weight: .bold))
                         .foregroundColor(MealioColors.terracotta)
                         .frame(width: 72, height: 72)
-                        .glassEffect(.regular.tint(MealioColors.terracotta), in: .circle)
+                        .glassEffect(.clear.tint(MealioColors.terracotta), in: .circle)
                         .shadow(color: Color.black.opacity(0.10), radius: 10, x: 0, y: 4)
                         .padding(.trailing, 75)
                         .transition(.scale(scale: 0.85).combined(with: .opacity))
@@ -249,7 +241,8 @@ public struct HomeView: View {
         .background {
             if vm.isScrolled {
                 Rectangle()
-                    .fill(.regularMaterial)
+                    .fill(Color.clear)
+                    .glassEffect(.clear, in: .rect)
                     .ignoresSafeArea(edges: .top)
                     .transition(.opacity)
             }
@@ -290,13 +283,15 @@ public struct HomeView: View {
             }) {
                 let hasActiveFilter = store.selectedCuisineFilter != nil || store.maxTimeFilter != nil || store.effortFilter != nil || store.dietaryFilter != nil
                 ZStack {
-                    Circle()
-                        .fill(hasActiveFilter ? MealioColors.terracotta : Color.white.opacity(0.25))
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.40), lineWidth: 0.6)
-                        )
-                        .frame(width: 30, height: 30)
+                    if hasActiveFilter {
+                        Circle()
+                            .fill(MealioColors.terracotta)
+                            .frame(width: 30, height: 30)
+                    } else {
+                        Circle()
+                            .fill(Color.black.opacity(0.06))
+                            .frame(width: 30, height: 30)
+                    }
                     
                     Image(systemName: "slider.horizontal.3")
                         .font(.system(size: 13, weight: .medium))
@@ -503,17 +498,8 @@ public struct HomeView: View {
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(
-                        Capsule()
-                            .fill(Color.black.opacity(0.35))
-                            .background(.ultraThinMaterial)
-                            .clipShape(Capsule())
-                    )
-                    .overlay(
-                        Capsule()
-                            .stroke(Color.white.opacity(0.25), lineWidth: 0.8)
-                    )
-                    .shadow(color: Color.black.opacity(0.20), radius: 6, x: 0, y: 2)
+                    .glassEffect(.clear, in: .capsule)
+                    .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 2)
                     .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .padding(.horizontal, 20)
@@ -713,17 +699,8 @@ public struct HomeView: View {
         Set(exploreSourceRecipes.map { String($0.title.prefix(1)).uppercased() })
     }
     
-    private var shouldShowAlphabetScroller: Bool {
-        store.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        store.selectedCategory == .forYou &&
-        store.selectedCuisineFilter == nil &&
-        store.maxTimeFilter == nil &&
-        store.effortFilter == nil &&
-        store.dietaryFilter == nil
-    }
-    
     // MARK: - Section 5: Explore All Recipes (Alphabetical Cuisine Filters + Contacts Side Scroller)
-    private var exploreAllRecipesSection: some View {
+    private func exploreAllRecipesSection(scrollProxy: ScrollViewProxy) -> some View {
         let cuisineTabs = ["All", "American", "French", "Indian", "Italian", "Japanese", "Mediterranean", "Mexican", "Middle Eastern", "Spanish", "Thai"]
         
         let sourceRecipes = exploreSourceRecipes
@@ -777,55 +754,63 @@ public struct HomeView: View {
                 .padding(.horizontal, 20)
             }
             
-            // Grouped 2-Column Grid (Standard VStack guarantees all letter anchors exist in view tree)
-            VStack(alignment: .leading, spacing: 22) {
-                ForEach(groupedByLetter, id: \.letter) { group in
-                    VStack(alignment: .leading, spacing: 12) {
-                        // Alphabet Section Header with scroll anchor and position tracker
-                        HStack(spacing: 8) {
-                            Text(group.letter)
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(MealioColors.terracotta)
-                            
-                            Rectangle()
-                                .fill(MealioColors.divider)
-                                .frame(height: 1)
-                        }
-                        .background(
-                            GeometryReader { geo in
-                                let frame = geo.frame(in: .named("homeScrollSpace"))
-                                Color.clear.preference(
-                                    key: ActiveLetterPreferenceKey.self,
-                                    value: [ActiveLetterInfo(letter: group.letter, minY: frame.minY)]
-                                )
+            // 2-Column Grid + Side Alphabet Index Scroller (moves with recipes)
+            HStack(alignment: .top, spacing: 6) {
+                // Grouped 2-Column Grid
+                VStack(alignment: .leading, spacing: 22) {
+                    ForEach(groupedByLetter, id: \.letter) { group in
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Alphabet Section Header with scroll anchor and position tracker
+                            HStack(spacing: 8) {
+                                Text(group.letter)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(MealioColors.terracotta)
+                                
+                                Rectangle()
+                                    .fill(MealioColors.divider)
+                                    .frame(height: 1)
                             }
-                        )
-                        .id("explore-letter-\(group.letter)")
-                        .padding(.top, 4)
-                        
-                        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 14) {
-                            ForEach(group.recipes) { recipe in
-                                RecipeCardView(
-                                    recipe: recipe,
-                                    isSaved: store.isRecipeSaved(recipe.id),
-                                    onSelect: {
-                                        store.recordVisitedRecipe(recipe)
-                                        selectedRecipeForNavigation = recipe
-                                    },
-                                    onToggleSave: {
-                                        store.toggleSave(recipe.id)
-                                    },
-                                    onAddToGroceries: {
-                                        store.addIngredientsToGroceryList(recipe.ingredients.filter { !$0.isInPantry })
-                                    }
-                                )
+                            .background(
+                                GeometryReader { geo in
+                                    let frame = geo.frame(in: .named("homeScrollSpace"))
+                                    Color.clear.preference(
+                                        key: ActiveLetterPreferenceKey.self,
+                                        value: [ActiveLetterInfo(letter: group.letter, minY: frame.minY)]
+                                    )
+                                }
+                            )
+                            .id("explore-letter-\(group.letter)")
+                            .padding(.top, 4)
+                            
+                            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 14) {
+                                ForEach(group.recipes) { recipe in
+                                    RecipeCardView(
+                                        recipe: recipe,
+                                        isSaved: store.isRecipeSaved(recipe.id),
+                                        onSelect: {
+                                            store.recordVisitedRecipe(recipe)
+                                            selectedRecipeForNavigation = recipe
+                                        },
+                                        onToggleSave: {
+                                            store.toggleSave(recipe.id)
+                                        },
+                                        onAddToGroceries: {
+                                            store.addIngredientsToGroceryList(recipe.ingredients.filter { !$0.isInPantry })
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                // Side Alphabet Index Scroller
+                floatingAlphabetScroller(availableLetters: availableLettersSet, scrollProxy: scrollProxy)
+                    .padding(.top, 4)
             }
             .padding(.leading, 20)
-            .padding(.trailing, 28)
+            .padding(.trailing, 6)
         }
     }
     
@@ -872,7 +857,7 @@ public struct HomeView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 3)
-        .glassEffect(.regular, in: .capsule)
+        .glassEffect(.clear, in: .capsule)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
