@@ -133,10 +133,9 @@ public struct RecipeDetailView: View {
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.white)
                             .frame(width: 40, height: 40)
-                            .background(Color.black.opacity(0.45))
-                            .clipShape(Circle())
+                            .liquidGlassCircle(isClear: false)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(LiquidGlassPressStyle())
                     
                     Spacer()
                     
@@ -158,8 +157,7 @@ public struct RecipeDetailView: View {
                             .foregroundColor(store.isRecipeSaved(recipe.id) ? MealioColors.terracottaLight : .white)
                             .symbolEffect(.bounce, value: store.isRecipeSaved(recipe.id))
                             .frame(width: 40, height: 40)
-                            .background(Color.black.opacity(0.45))
-                            .clipShape(Circle())
+                            .liquidGlassCircle(isClear: false)
                     }
                     .buttonStyle(LiquidGlassPressStyle())
                 }
@@ -656,11 +654,12 @@ public struct RecipeDetailView: View {
             .padding(.top, 12)
             .padding(.bottom, 20)
             .background(
-                MealioColors.background
+                Rectangle()
+                    .fill(.thickMaterial)
                     .overlay(
                         Rectangle()
-                            .fill(MealioColors.divider.opacity(0.4))
-                            .frame(height: 1),
+                            .fill(MealioColors.divider)
+                            .frame(height: 0.5),
                         alignment: .top
                     )
             )

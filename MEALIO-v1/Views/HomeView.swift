@@ -17,10 +17,10 @@ public struct SectionHeaderArrowButton: View {
             ZStack {
                 Image(systemName: "arrow.right")
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(MealioColors.terracotta)
+                    .foregroundColor(.black)
             }
             .frame(width: 36, height: 36)
-            .liquidGlassCircle(isClear: true)
+            .liquidGlassCircle(isClear: false)
             .contentShape(Rectangle())
             .frame(minWidth: 44, minHeight: 44)
         }
@@ -188,30 +188,17 @@ public struct HomeView: View {
                 if let letter = vm.activeScrubLetter {
                     ZStack {
                         Circle()
-                            .fill(.ultraThinMaterial)
+                            .fill(.thickMaterial)
                         
                         Circle()
-                            .fill(Color.white.opacity(0.92))
-                        
-                        Circle()
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        MealioColors.terracotta,
-                                        MealioColors.terracotta.opacity(0.5)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2.2
-                            )
+                            .strokeBorder(MealioColors.terracotta, lineWidth: 1.5)
                         
                         Text(letter)
                             .font(.system(size: 34, weight: .bold))
                             .foregroundColor(MealioColors.terracotta)
                     }
                     .frame(width: 72, height: 72)
-                    .shadow(color: Color.black.opacity(0.18), radius: 14, x: 0, y: 5)
+                    .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 4)
                     .padding(.trailing, 75)
                     .transition(.scale(scale: 0.85).combined(with: .opacity))
                     .allowsHitTesting(false)
@@ -270,22 +257,12 @@ public struct HomeView: View {
             if vm.isScrolled {
                 ZStack(alignment: .bottom) {
                     Rectangle()
-                        .fill(.ultraThinMaterial)
-                        .overlay(Color.white.opacity(0.08))
+                        .fill(.thickMaterial)
                         .ignoresSafeArea(edges: .top)
                     
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.85),
-                                    Color.white.opacity(0.20)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(height: 0.6)
+                        .fill(MealioColors.divider)
+                        .frame(height: 0.5)
                 }
                 .transition(.opacity)
             }
@@ -909,16 +886,14 @@ public struct HomeView: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 3)
         .background(
-            Capsule()
-                .fill(Color.white.opacity(0.12))
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
+            Capsule(style: .continuous)
+                .fill(.thickMaterial)
         )
         .overlay(
-            Capsule()
-                .stroke(Color.white.opacity(0.45), lineWidth: 0.6)
+            Capsule(style: .continuous)
+                .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
         )
-        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in

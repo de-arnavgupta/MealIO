@@ -95,19 +95,17 @@ public struct CookingLiveActivityBar: View {
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(MealioColors.textSecondary)
                     .frame(width: 26, height: 26)
-                    .background(.ultraThinMaterial)
-                    .background(Color.white.opacity(0.20))
-                    .clipShape(Circle())
+                    .background(.thickMaterial, in: Circle())
                     .overlay(
                         Circle()
-                            .stroke(Color.white.opacity(0.65), lineWidth: 0.8)
+                            .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
                     )
             }
             .buttonStyle(LiquidGlassPressStyle())
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 7)
-        .liquidGlass(cornerRadius: 28, isClear: true)
+        .liquidGlass(cornerRadius: 28, isClear: false)
         .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 3)
     }
 }

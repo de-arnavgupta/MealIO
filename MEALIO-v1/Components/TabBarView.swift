@@ -82,41 +82,10 @@ public struct CustomTabBar: View {
                         .padding(.vertical, 8)
                         .background {
                             if isSelected {
-                                // Fluid mercury glass indicator with double specular highlight
-                                ZStack {
-                                    Capsule(style: .continuous)
-                                        .fill(MealioColors.terracotta.opacity(0.14))
-                                    
-                                    // Ambient caustic inner reflection
-                                    Capsule(style: .continuous)
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.white.opacity(0.45),
-                                                    Color.white.opacity(0.10),
-                                                    MealioColors.terracotta.opacity(0.06)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                    
-                                    // Specular edge rim
-                                    Capsule(style: .continuous)
-                                        .stroke(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.white.opacity(0.85),
-                                                    MealioColors.terracotta.opacity(0.30)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 0.8
-                                        )
-                                }
-                                .padding(.horizontal, 4)
-                                .matchedGeometryEffect(id: "activeTabIndicator", in: tabNamespace)
+                                Capsule(style: .continuous)
+                                    .fill(MealioColors.terracotta.opacity(0.14))
+                                    .padding(.horizontal, 4)
+                                    .matchedGeometryEffect(id: "activeTabIndicator", in: tabNamespace)
                             }
                         }
                         .contentShape(Rectangle())
@@ -126,7 +95,7 @@ public struct CustomTabBar: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
-            .liquidGlass(cornerRadius: 32, isClear: true)
+            .liquidGlass(cornerRadius: 32, isClear: false)
             
             // Standalone Floating Circular Add Recipe Button (Matching Liquid Glass Tab Bar)
             Button(action: {
@@ -134,10 +103,10 @@ public struct CustomTabBar: View {
                 onAddRecipe()
             }) {
                 Image(systemName: "plus")
-                    .font(.system(size: 21, weight: .semibold))
-                    .foregroundColor(MealioColors.terracotta)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(MealioColors.textPrimary)
                     .frame(width: 56, height: 56)
-                    .liquidGlassCircle(isClear: true)
+                    .liquidGlassCircle(isClear: false)
             }
             .buttonStyle(LiquidGlassPressStyle())
         }
