@@ -655,13 +655,7 @@ public struct RecipeDetailView: View {
             .padding(.bottom, 20)
             .background(
                 Rectangle()
-                    .fill(.thickMaterial)
-                    .overlay(
-                        Rectangle()
-                            .fill(MealioColors.divider)
-                            .frame(height: 0.5),
-                        alignment: .top
-                    )
+                    .fill(.regularMaterial)
             )
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }

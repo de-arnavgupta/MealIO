@@ -95,11 +95,7 @@ public struct CookingLiveActivityBar: View {
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(MealioColors.textSecondary)
                     .frame(width: 26, height: 26)
-                    .background(.thickMaterial, in: Circle())
-                    .overlay(
-                        Circle()
-                            .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
-                    )
+                    .glassEffect(.regular, in: .circle)
             }
             .buttonStyle(LiquidGlassPressStyle())
         }

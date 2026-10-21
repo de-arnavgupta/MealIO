@@ -186,22 +186,15 @@ public struct HomeView: View {
                 
                 // Floating Alphabet Magnifier HUD during scrubbing
                 if let letter = vm.activeScrubLetter {
-                    ZStack {
-                        Circle()
-                            .fill(.thickMaterial)
-                        
-                        Circle()
-                            .strokeBorder(MealioColors.terracotta, lineWidth: 1.5)
-                        
-                        Text(letter)
-                            .font(.system(size: 34, weight: .bold))
-                            .foregroundColor(MealioColors.terracotta)
-                    }
-                    .frame(width: 72, height: 72)
-                    .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 4)
-                    .padding(.trailing, 75)
-                    .transition(.scale(scale: 0.85).combined(with: .opacity))
-                    .allowsHitTesting(false)
+                    Text(letter)
+                        .font(.system(size: 34, weight: .bold))
+                        .foregroundColor(MealioColors.terracotta)
+                        .frame(width: 72, height: 72)
+                        .glassEffect(.regular.tint(MealioColors.terracotta), in: .circle)
+                        .shadow(color: Color.black.opacity(0.10), radius: 10, x: 0, y: 4)
+                        .padding(.trailing, 75)
+                        .transition(.scale(scale: 0.85).combined(with: .opacity))
+                        .allowsHitTesting(false)
                 }
             }
         }
@@ -255,16 +248,10 @@ public struct HomeView: View {
         .frame(maxWidth: .infinity)
         .background {
             if vm.isScrolled {
-                ZStack(alignment: .bottom) {
-                    Rectangle()
-                        .fill(.thickMaterial)
-                        .ignoresSafeArea(edges: .top)
-                    
-                    Rectangle()
-                        .fill(MealioColors.divider)
-                        .frame(height: 0.5)
-                }
-                .transition(.opacity)
+                Rectangle()
+                    .fill(.regularMaterial)
+                    .ignoresSafeArea(edges: .top)
+                    .transition(.opacity)
             }
         }
     }
@@ -885,15 +872,7 @@ public struct HomeView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 3)
-        .background(
-            Capsule(style: .continuous)
-                .fill(.thickMaterial)
-        )
-        .overlay(
-            Capsule(style: .continuous)
-                .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
-        )
-        .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
+        .glassEffect(.regular, in: .capsule)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in

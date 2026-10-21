@@ -39,76 +39,78 @@ public struct CustomTabBar: View {
     }
     
     public var body: some View {
-        HStack(spacing: 10) {
-            // 3-Nav Tab Bar Dock
-            HStack(spacing: 0) {
-                ForEach(MainTab.allCases, id: \.self) { tab in
-                    let isSelected = selectedTab == tab
-                    Button(action: {
-                        HapticFeedback.light()
-                        withAnimation(.spring(response: 0.36, dampingFraction: 0.70)) {
-                            selectedTab = tab
-                        }
-                    }) {
-                        VStack(spacing: 3) {
-                            ZStack(alignment: .topTrailing) {
-                                Image(systemName: isSelected ? tab.selectedIconName : tab.iconName)
-                                    .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
-                                    .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
-                                    .scaleEffect(isSelected ? 1.10 : 0.94)
-                                    .symbolEffect(.bounce, value: isSelected)
-                                    .animation(.spring(response: 0.34, dampingFraction: 0.65), value: isSelected)
-                                    .frame(height: 24)
+        GlassEffectContainer(spacing: 10) {
+            HStack(spacing: 10) {
+                // 3-Nav Tab Bar Dock
+                HStack(spacing: 0) {
+                    ForEach(MainTab.allCases, id: \.self) { tab in
+                        let isSelected = selectedTab == tab
+                        Button(action: {
+                            HapticFeedback.light()
+                            withAnimation(.spring(response: 0.36, dampingFraction: 0.70)) {
+                                selectedTab = tab
+                            }
+                        }) {
+                            VStack(spacing: 3) {
+                                ZStack(alignment: .topTrailing) {
+                                    Image(systemName: isSelected ? tab.selectedIconName : tab.iconName)
+                                        .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
+                                        .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
+                                        .scaleEffect(isSelected ? 1.10 : 0.94)
+                                        .symbolEffect(.bounce, value: isSelected)
+                                        .animation(.spring(response: 0.34, dampingFraction: 0.65), value: isSelected)
+                                        .frame(height: 24)
+                                    
+                                    if tab == .groceries && groceryCount > 0 {
+                                        Text("\(groceryCount)")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 5)
+                                            .padding(.vertical, 1.5)
+                                            .background(MealioColors.terracotta)
+                                            .clipShape(Capsule())
+                                            .offset(x: 12, y: -4)
+                                            .transition(.scale.combined(with: .opacity))
+                                    }
+                                }
                                 
-                                if tab == .groceries && groceryCount > 0 {
-                                    Text("\(groceryCount)")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 5)
-                                        .padding(.vertical, 1.5)
-                                        .background(MealioColors.terracotta)
-                                        .clipShape(Capsule())
-                                        .offset(x: 12, y: -4)
-                                        .transition(.scale.combined(with: .opacity))
+                                Text(tab.rawValue)
+                                    .font(.system(size: 11, weight: isSelected ? .bold : .medium))
+                                    .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
+                                    .scaleEffect(isSelected ? 1.04 : 0.98)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background {
+                                if isSelected {
+                                    Capsule(style: .continuous)
+                                        .fill(MealioColors.terracotta.opacity(0.14))
+                                        .padding(.horizontal, 4)
+                                        .matchedGeometryEffect(id: "activeTabIndicator", in: tabNamespace)
                                 }
                             }
-                            
-                            Text(tab.rawValue)
-                                .font(.system(size: 11, weight: isSelected ? .bold : .medium))
-                                .foregroundColor(isSelected ? MealioColors.terracotta : MealioColors.textSecondary)
-                                .scaleEffect(isSelected ? 1.04 : 0.98)
+                            .contentShape(Rectangle())
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background {
-                            if isSelected {
-                                Capsule(style: .continuous)
-                                    .fill(MealioColors.terracotta.opacity(0.14))
-                                    .padding(.horizontal, 4)
-                                    .matchedGeometryEffect(id: "activeTabIndicator", in: tabNamespace)
-                            }
-                        }
-                        .contentShape(Rectangle())
+                        .buttonStyle(LiquidGlassPressStyle())
                     }
-                    .buttonStyle(LiquidGlassPressStyle())
                 }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .glassEffect(.regular, in: .capsule)
+                
+                // Standalone Floating Circular Add Recipe Button
+                Button(action: {
+                    HapticFeedback.medium()
+                    onAddRecipe()
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(MealioColors.textPrimary)
+                        .frame(width: 56, height: 56)
+                        .glassEffect(.regular, in: .circle)
+                }
+                .buttonStyle(LiquidGlassPressStyle())
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .liquidGlass(cornerRadius: 32, isClear: false)
-            
-            // Standalone Floating Circular Add Recipe Button (Matching Liquid Glass Tab Bar)
-            Button(action: {
-                HapticFeedback.medium()
-                onAddRecipe()
-            }) {
-                Image(systemName: "plus")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(MealioColors.textPrimary)
-                    .frame(width: 56, height: 56)
-                    .liquidGlassCircle(isClear: false)
-            }
-            .buttonStyle(LiquidGlassPressStyle())
         }
         .padding(.horizontal, 18)
         .padding(.bottom, 12)

@@ -1,9 +1,12 @@
 import SwiftUI
 import UIKit
 
-// MARK: - Native Apple Liquid Glass System (HIG & Apple Design Award Standard)
-// Pure native SwiftUI Material architecture using system optical compositor blur,
-// crisp 0.5pt hairline borders, and zero artificial painted gradients.
+// MARK: - Native Apple Liquid Glass (iOS 26+ .glassEffect() API)
+// Uses SwiftUI's built-in .glassEffect() modifier — the actual system-level
+// liquid glass with real-time refraction, transparency, specular highlights,
+// and device-motion lighting. No manual materials, no gradients, no painted backgrounds.
+
+// MARK: - View Modifiers wrapping native .glassEffect()
 
 public struct LiquidGlassModifier: ViewModifier {
     public var cornerRadius: CGFloat
@@ -17,22 +20,13 @@ public struct LiquidGlassModifier: ViewModifier {
     }
     
     public func body(content: Content) -> some View {
-        content
-            .background {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(isClear ? .ultraThinMaterial : .thickMaterial)
-                    .overlay {
-                        if let tint = tint {
-                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                                .fill(tint.opacity(0.10))
-                        }
-                    }
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
-            }
-            .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 3)
+        if let tint = tint {
+            content
+                .glassEffect(.regular.tint(tint), in: .rect(cornerRadius: cornerRadius))
+        } else {
+            content
+                .glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
+        }
     }
 }
 
@@ -46,35 +40,16 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
     }
     
     public func body(content: Content) -> some View {
-        content
-            .background {
-                if isSelected {
-                    Capsule(style: .continuous)
-                        .fill(tint ?? MealioColors.terracotta)
-                } else {
-                    Capsule(style: .continuous)
-                        .fill(.thickMaterial)
-                        .overlay {
-                            if let tint = tint {
-                                Capsule(style: .continuous)
-                                    .fill(tint.opacity(0.10))
-                            }
-                        }
-                }
-            }
-            .overlay {
-                Capsule(style: .continuous)
-                    .strokeBorder(
-                        isSelected ? Color.white.opacity(0.25) : Color.white.opacity(0.18),
-                        lineWidth: 0.5
-                    )
-            }
-            .shadow(
-                color: isSelected ? (tint ?? MealioColors.terracotta).opacity(0.22) : Color.black.opacity(0.04),
-                radius: isSelected ? 6 : 4,
-                x: 0,
-                y: isSelected ? 3 : 1
-            )
+        if isSelected {
+            content
+                .glassEffect(.regular.tint(tint ?? MealioColors.terracotta), in: .capsule)
+        } else if let tint = tint {
+            content
+                .glassEffect(.regular.tint(tint), in: .capsule)
+        } else {
+            content
+                .glassEffect(.regular, in: .capsule)
+        }
     }
 }
 
@@ -90,35 +65,16 @@ public struct LiquidGlassCircleModifier: ViewModifier {
     }
     
     public func body(content: Content) -> some View {
-        content
-            .background {
-                if isSelected, let tint = tint {
-                    Circle()
-                        .fill(tint)
-                } else {
-                    Circle()
-                        .fill(isClear ? .ultraThinMaterial : .thickMaterial)
-                        .overlay {
-                            if let tint = tint {
-                                Circle()
-                                    .fill(tint.opacity(0.10))
-                            }
-                        }
-                }
-            }
-            .overlay {
-                Circle()
-                    .strokeBorder(
-                        isSelected ? Color.white.opacity(0.25) : Color.white.opacity(0.18),
-                        lineWidth: 0.5
-                    )
-            }
-            .shadow(
-                color: isSelected ? (tint ?? MealioColors.terracotta).opacity(0.28) : Color.black.opacity(0.04),
-                radius: isSelected ? 8 : 4,
-                x: 0,
-                y: isSelected ? 3 : 1
-            )
+        if isSelected, let tint = tint {
+            content
+                .glassEffect(.regular.tint(tint), in: .circle)
+        } else if let tint = tint {
+            content
+                .glassEffect(.regular.tint(tint), in: .circle)
+        } else {
+            content
+                .glassEffect(.regular, in: .circle)
+        }
     }
 }
 

@@ -98,5 +98,6 @@ struct ContentView: View {
                 .presentationCornerRadius(32)
             }
         }
+        .preferredColorScheme(.light)
     }
 }
