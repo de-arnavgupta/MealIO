@@ -2,16 +2,15 @@ import SwiftUI
 import UIKit
 
 // MARK: - Apple Liquid Glass Design System
-// Reference: https://developer.apple.com/documentation/technologyoverviews/liquid-glass
+// Reference: https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass
 //
-// Apple's Liquid Glass combines real-time optical refraction, specular edge highlights,
-// and fluid dynamic reactivity. It forms a distinct functional layer that floats above
-// underlying content, allowing colors and motion to shine through while keeping controls legible.
+// Apple's Liquid Glass utilizes the .regular variant for controls and navigation
+// to ensure perfect luminosity and contrast across all backgrounds (including solid white,
+// cream, and scrolling content). It dynamically adjusts internal luminosity, eliminating
+// the dark/shadow artifacts of .clear while preserving true optical refraction and
+// specular edge highlights.
 //
-// Native SwiftUI APIs:
-// - .glassEffect(_:in:) with .clear (transparent, high-translucency) or .regular
-// - .interactive() for dynamic touch, tilt, and pointer responses
-// - GlassEffectContainer for coalescing and morphing neighboring shapes organically
+// Chained with .interactive() for fluid real-time touch, tilt, and pointer responsiveness.
 
 public struct LiquidGlassModifier: ViewModifier {
     public var cornerRadius: CGFloat
@@ -27,10 +26,10 @@ public struct LiquidGlassModifier: ViewModifier {
     public func body(content: Content) -> some View {
         if let tint = tint {
             content
-                .glassEffect(.clear.tint(tint).interactive(), in: .rect(cornerRadius: cornerRadius))
+                .glassEffect(.regular.tint(tint).interactive(), in: .rect(cornerRadius: cornerRadius))
         } else {
             content
-                .glassEffect(.clear.interactive(), in: .rect(cornerRadius: cornerRadius))
+                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: cornerRadius))
         }
     }
 }
@@ -47,13 +46,13 @@ public struct LiquidGlassCapsuleModifier: ViewModifier {
     public func body(content: Content) -> some View {
         if isSelected {
             content
-                .glassEffect(.clear.tint(tint ?? MealioColors.terracotta).interactive(), in: .capsule)
+                .glassEffect(.regular.tint(tint ?? MealioColors.terracotta).interactive(), in: .capsule)
         } else if let tint = tint {
             content
-                .glassEffect(.clear.tint(tint).interactive(), in: .capsule)
+                .glassEffect(.regular.tint(tint).interactive(), in: .capsule)
         } else {
             content
-                .glassEffect(.clear.interactive(), in: .capsule)
+                .glassEffect(.regular.interactive(), in: .capsule)
         }
     }
 }
@@ -72,13 +71,13 @@ public struct LiquidGlassCircleModifier: ViewModifier {
     public func body(content: Content) -> some View {
         if isSelected, let tint = tint {
             content
-                .glassEffect(.clear.tint(tint).interactive(), in: .circle)
+                .glassEffect(.regular.tint(tint).interactive(), in: .circle)
         } else if let tint = tint {
             content
-                .glassEffect(.clear.tint(tint).interactive(), in: .circle)
+                .glassEffect(.regular.tint(tint).interactive(), in: .circle)
         } else {
             content
-                .glassEffect(.clear.interactive(), in: .circle)
+                .glassEffect(.regular.interactive(), in: .circle)
         }
     }
 }

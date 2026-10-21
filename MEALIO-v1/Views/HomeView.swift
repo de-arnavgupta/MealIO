@@ -182,7 +182,7 @@ public struct HomeView: View {
                         .font(.system(size: 34, weight: .bold))
                         .foregroundColor(MealioColors.terracotta)
                         .frame(width: 72, height: 72)
-                        .glassEffect(.clear.tint(MealioColors.terracotta).interactive(), in: .circle)
+                        .glassEffect(.regular.tint(MealioColors.terracotta).interactive(), in: .circle)
                         .shadow(color: Color.black.opacity(0.10), radius: 10, x: 0, y: 4)
                         .padding(.trailing, 75)
                         .transition(.scale(scale: 0.85).combined(with: .opacity))
@@ -242,7 +242,7 @@ public struct HomeView: View {
             if vm.isScrolled {
                 Rectangle()
                     .fill(Color.clear)
-                    .glassEffect(.clear, in: .rect)
+                    .glassEffect(.regular, in: .rect)
                     .ignoresSafeArea(edges: .top)
                     .transition(.opacity)
             }
@@ -498,7 +498,7 @@ public struct HomeView: View {
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .glassEffect(.clear, in: .capsule)
+                    .glassEffect(.regular, in: .capsule)
                     .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 2)
                     .frame(maxWidth: .infinity, alignment: .center)
                 }
@@ -857,7 +857,7 @@ public struct HomeView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 3)
-        .glassEffect(.clear.interactive(), in: .capsule)
+        .glassEffect(.regular.interactive(), in: .capsule)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in

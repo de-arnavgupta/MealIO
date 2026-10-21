@@ -97,7 +97,7 @@ public struct CustomTabBar: View {
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
-                .glassEffect(.clear.interactive(), in: .capsule)
+                .glassEffect(.regular.interactive(), in: .capsule)
                 
                 // 2. Standalone Floating Circular Add Recipe Button
                 Button(action: {
@@ -108,7 +108,7 @@ public struct CustomTabBar: View {
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(MealioColors.textPrimary)
                         .frame(width: 56, height: 56)
-                        .glassEffect(.clear.interactive(), in: .circle)
+                        .glassEffect(.regular.interactive(), in: .circle)
                 }
                 .buttonStyle(LiquidGlassPressStyle())
             }
