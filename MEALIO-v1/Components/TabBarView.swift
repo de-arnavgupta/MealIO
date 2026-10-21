@@ -85,8 +85,10 @@ public struct CustomTabBar: View {
                             .background {
                                 if isSelected {
                                     Capsule(style: .continuous)
-                                        .fill(MealioColors.terracotta.opacity(0.14))
+                                        .fill(Color.clear)
+                                        .glassEffect(.regular.tint(MealioColors.terracotta).interactive(), in: .capsule)
                                         .padding(.horizontal, 4)
+                                        .padding(.vertical, 2)
                                         .matchedGeometryEffect(id: "activeTabIndicator", in: tabNamespace)
                                 }
                             }
