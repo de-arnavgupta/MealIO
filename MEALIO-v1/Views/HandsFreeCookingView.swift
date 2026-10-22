@@ -3,6 +3,7 @@ import SwiftUI
 public struct HandsFreeCookingView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var session: CookingSession
+    @ObservedObject private var gestureManager = GestureControlManager.shared
     
     public init(session: CookingSession) {
         self.session = session
@@ -14,7 +15,6 @@ public struct HandsFreeCookingView: View {
     
     public var body: some View {
         ZStack {
-            // Dark cooking background
             MealioColors.cookingBackground
                 .ignoresSafeArea()
             
@@ -63,7 +63,10 @@ public struct HandsFreeCookingView: View {
                         }
                         
                         Button(action: {
-                            session.isVoiceListening.toggle()
+                            withAnimation {
+                                session.isVoiceListening.toggle()
+                                gestureManager.isEnabled = session.isVoiceListening
+                            }
                         }) {
                             Label(session.isVoiceListening ? "Mute Microphone" : "Enable Microphone", systemImage: session.isVoiceListening ? "mic.slash" : "mic.fill")
                         }
@@ -90,7 +93,7 @@ public struct HandsFreeCookingView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
                 
-                // Segmented Step Progress Bar (Interactive tap to jump!)
+                // Segmented Step Progress Bar
                 HStack(spacing: 6) {
                     ForEach(0..<session.recipe.steps.count, id: \.self) { index in
                         Button(action: {
@@ -136,40 +139,75 @@ public struct HandsFreeCookingView: View {
                             
                             Spacer()
                             
+                            // Status Button mapped to Gesture Manager
                             Button(action: {
                                 withAnimation {
                                     session.isVoiceListening.toggle()
+                                    gestureManager.isEnabled = session.isVoiceListening
                                 }
                             }) {
-                                HStack(spacing: 6) {
-                                    Circle()
-                                        .fill(session.isVoiceListening ? Color(hex: 0x5CD18B) : Color(hex: 0x7E9085))
-                                        .frame(width: 7, height: 7)
-                                    Text(session.isVoiceListening ? "Hands-free on" : "Paused")
-                                        .font(.system(size: 12, weight: .medium))
-                                        .foregroundColor(Color(hex: 0x8A9E92))
+                                if !gestureManager.gestureDirectionText.isEmpty {
+                                    Text(gestureManager.gestureDirectionText.uppercased())
+                                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                                        .foregroundColor(Color(hex: 0x00FFFF))
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 4)
+                                        .background(Color(hex: 0x00FFFF).opacity(0.15))
+                                        .cornerRadius(8)
+                                        .transition(.scale.combined(with: .opacity))
+                                        
+                                } else if gestureManager.swipeHoldProgress > 0 {
+                                    HStack(spacing: 6) {
+                                        ZStack {
+                                            Circle()
+                                                .stroke(Color.white.opacity(0.25), lineWidth: 2)
+                                                .frame(width: 14, height: 14)
+                                            Circle()
+                                                .trim(from: 0, to: CGFloat(gestureManager.swipeHoldProgress))
+                                                .stroke(Color(hex: 0x00FFFF), lineWidth: 2)
+                                                .frame(width: 14, height: 14)
+                                                .rotationEffect(.degrees(-90))
+                                        }
+                                        
+                                        Text(gestureManager.holdingIndicatorText.isEmpty ? "Holding..." : gestureManager.holdingIndicatorText)
+                                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                                            .foregroundColor(Color(hex: 0x00FFFF))
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.black.opacity(0.7))
+                                    .cornerRadius(8)
+                                    
+                                } else {
+                                    HStack(spacing: 6) {
+                                        Circle()
+                                            .fill(session.isVoiceListening ? Color(hex: 0x5CD18B) : Color(hex: 0x7E9085))
+                                            .frame(width: 7, height: 7)
+                                        Text(session.isVoiceListening ? "Hands Free ON" : "Hands Free OFF")
+                                            .font(.system(size: 12, weight: .medium))
+                                            .foregroundColor(Color(hex: 0x8A9E92))
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(MealioColors.cookingSurface.opacity(0.8))
+                                    .cornerRadius(8)
                                 }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(MealioColors.cookingSurface.opacity(0.8))
-                                .cornerRadius(8)
                             }
                             .buttonStyle(.plain)
+                            .animation(.easeInOut(duration: 0.15), value: gestureManager.swipeHoldProgress)
+                            .animation(.easeInOut(duration: 0.15), value: gestureManager.gestureDirectionText)
                         }
                         
-                        // Step Title
                         Text(session.currentStep.title + (session.currentStep.title.hasSuffix(".") ? "" : "."))
                             .font(.system(size: 32, weight: .bold, design: .default))
                             .foregroundColor(MealioColors.textLight)
                             .lineLimit(2)
                         
-                        // Step Instructions
                         Text(session.currentStep.instruction)
                             .font(.system(size: 17, weight: .regular))
                             .foregroundColor(Color(hex: 0xC7D6CD))
                             .lineSpacing(4)
                         
-                        // Circular Timer Section (shown if step has timer)
                         if session.currentStep.hasTimer {
                             HStack {
                                 Spacer()
@@ -179,17 +217,14 @@ public struct HandsFreeCookingView: View {
                             .padding(.vertical, 8)
                         }
                         
-                        // Petit Chef On-Device AI dialogue bubble
                         if let tip = session.currentStep.petitChefTip {
                             HStack(alignment: .bottom, spacing: 12) {
-                                // 3D Chef Character
                                 Image("PetitChef")
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 70, height: 95)
                                     .shadow(color: Color.black.opacity(0.3), radius: 6, x: 0, y: 4)
                                 
-                                // Speech Bubble
                                 VStack(alignment: .leading, spacing: 6) {
                                     HStack(spacing: 5) {
                                         Image(systemName: "sparkles")
@@ -225,7 +260,6 @@ public struct HandsFreeCookingView: View {
                             .padding(.top, 6)
                         }
                         
-                        // Step Navigation Controls
                         HStack(spacing: 12) {
                             if session.currentStepIndex > 0 {
                                 Button(action: {
@@ -292,7 +326,6 @@ public struct HandsFreeCookingView: View {
                     .padding(.bottom, 20)
                 }
                 
-                // Bottom Voice Waveform Bar
                 AudioWaveformView(session: session)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 16)
@@ -309,5 +342,24 @@ public struct HandsFreeCookingView: View {
                 }
         )
         .preferredColorScheme(.dark)
+        .onAppear {
+            GestureControlManager.shared.isRecipeStepsActive = true
+            session.isVoiceListening = gestureManager.isEnabled
+        }
+        .onDisappear {
+            GestureControlManager.shared.isRecipeStepsActive = false
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .mealioGestureDetected)) { notification in
+            guard let gesture = notification.userInfo?["gesture"] as? AppGesture else { return }
+            
+            switch gesture {
+            case .left:
+                withAnimation { session.previousStep() }
+            case .right:
+                withAnimation { session.nextStep() }
+            case .click:
+                withAnimation { session.toggleTimer() }
+            }
+        }
     }
 }
