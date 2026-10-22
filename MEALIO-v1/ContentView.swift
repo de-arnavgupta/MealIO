@@ -8,7 +8,7 @@ public class ContentViewModel: ObservableObject {
     @Published public var activeCookingPresented: Bool = false
     @Published public var showingAddRecipeSheet: Bool = false
     
-    public init() {}
+    public init() { }
 }
 
 struct ContentView: View {
