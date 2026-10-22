@@ -141,6 +141,10 @@ public struct ProfileView: View {
                 )
                 .padding(.horizontal, 20)
                 
+                // Gesture Navigation Toggle
+                GestureToggleButton(style: .settingsRow)
+                    .padding(.horizontal, 20)
+                
                 // Pantry Staples Section
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
