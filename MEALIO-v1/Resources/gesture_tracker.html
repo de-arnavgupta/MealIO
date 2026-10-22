@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Hand Skeleton Tracker</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+    }
+    video {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <video id="webcam" autoplay playsinline></video>
+  <canvas id="output"></canvas>
+
+  <script type="module">
+    import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+    const video = document.getElementById("webcam");
+    const canvas = document.getElementById("output");
+    const ctx = canvas.getContext("2d");
+
+    let handLandmarker;
+    let previousIX = null;
+    let iDirection = "";
+    let messageTimeout = null;
+    let touchStartTime = null;
+    let clickCooldownUntil = 0;
+    const MOVEMENT_THRESHOLD = 0.04;
+    const TOUCH_DISTANCE_THRESHOLD = 0.06;
+    const MESSAGE_DURATION = 1000;
+    const CLICK_COOLDOWN = 500;
+
+    // The 5 fingertip indices in MediaPipe's 21-point hand model
+    const FINGERTIPS = [4, 8, 12, 16, 20];
+
+    // Standard MediaPipe hand skeleton connections
+    const CONNECTIONS = [
+      [0, 1], [1, 2], [2, 3], [3, 4],         // Thumb
+      [0, 5], [5, 6], [6, 7], [7, 8],         // Index finger
+      [5, 9], [9, 10], [10, 11], [11, 12],    // Middle finger
+      [9, 13], [13, 14], [14, 15], [15, 16],  // Ring finger
+      [13, 17], [0, 17], [17, 18], [18, 19], [19, 20] // Pinky & Palm base
+    ];
+
+    function showMessage(message) {
+      iDirection = message;
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.gestureHandler) {
+        window.webkit.messageHandlers.gestureHandler.postMessage(message);
+      }
+      clearTimeout(messageTimeout);
+      messageTimeout = setTimeout(() => {
+        iDirection = "";
+      }, MESSAGE_DURATION);
+    }
+
+    async function init() {
+      // 1. Load the MediaPipe Vision WASM runtime and HandLandmarker model
+      const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+      );
+
+      handLandmarker = await HandLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+          delegate: "GPU"
+        },
+        runningMode: "VIDEO",
+        numHands: 2,
+        minHandDetectionConfidence: 0.5,
+        minHandPresenceConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+
+      // 2. Start the webcam feed
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
+      });
+      video.srcObject = stream;
+
+      video.addEventListener("loadeddata", () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        requestAnimationFrame(render);
+      });
+    }
+
+    function render() {
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // 1. Draw the mirrored webcam frame
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -width, 0, width, height);
+      ctx.restore();
+
+      // 2. Detect hand landmarks on the current video frame
+      const results = handLandmarker.detectForVideo(video, performance.now());
+      const firstHand = results.landmarks?.[0];
+
+      if (firstHand) {
+        const currentIX = (1 - firstHand[8].x) * width;
+
+        if (previousIX !== null) {
+          const movement = currentIX - previousIX;
+          if (Math.abs(movement) >= MOVEMENT_THRESHOLD * width) {
+            showMessage(movement > 0 ? "right" : "left");
+          }
+        }
+        previousIX = currentIX;
+
+        const thumbToIndexDistance = Math.hypot(
+          firstHand[4].x - firstHand[8].x,
+          firstHand[4].y - firstHand[8].y
+        );
+
+        if (thumbToIndexDistance <= TOUCH_DISTANCE_THRESHOLD) {
+          if (touchStartTime === null) {
+            touchStartTime = performance.now();
+          } else if (
+            performance.now() - touchStartTime >= 700 &&
+            performance.now() >= clickCooldownUntil
+          ) {
+            showMessage("click");
+            clickCooldownUntil = performance.now() + CLICK_COOLDOWN;
+            touchStartTime = null;
+          }
+        } else {
+          touchStartTime = null;
+        }
+      } else {
+        previousIX = null;
+        touchStartTime = null;
+      }
+
+      // 3. Draw the white wireframe and joint circles
+      if (results.landmarks) {
+        for (const landmarks of results.landmarks) {
+          
+          // Draw connecting white lines
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+          ctx.lineWidth = 2;
+          for (const [startIdx, endIdx] of CONNECTIONS) {
+            const start = landmarks[startIdx];
+            const end = landmarks[endIdx];
+
+            // (1 - x) flips the X coordinate to match the mirrored video
+            ctx.beginPath();
+            ctx.moveTo((1 - start.x) * width, start.y * height);
+            ctx.lineTo((1 - end.x) * width, end.y * height);
+            ctx.stroke();
+          }
+
+          // Draw the 21 landmark dots (larger bordered circles on fingertips)
+          landmarks.forEach((pt, idx) => {
+            const isFingertip = FINGERTIPS.includes(idx);
+            const x = (1 - pt.x) * width;
+            const y = pt.y * height;
+            const pointName = String.fromCharCode(65 + idx);
+
+            ctx.beginPath();
+            ctx.arc(x, y, isFingertip ? 7 : 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+
+            if (isFingertip) {
+              ctx.lineWidth = 2;
+              ctx.strokeStyle = "#333333";
+              ctx.stroke();
+            }
+
+            ctx.font = "bold 14px sans-serif";
+            ctx.fillStyle = "#00ffff";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "bottom";
+            ctx.fillText(pointName, x + 8, y - 6);
+          });
+        }
+      }
+
+      ctx.font = "bold 28px sans-serif";
+      ctx.fillStyle = "#00ffff";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(iDirection, 20, 20);
+
+      requestAnimationFrame(render);
+    }
+
+    init();
+  </script>
+</body>
+</html>
