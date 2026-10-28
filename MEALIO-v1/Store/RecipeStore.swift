@@ -38,6 +38,8 @@ public class RecipeStore: ObservableObject {
     
     // Active Cooking Session (Live Activity & Dynamic Island)
     @Published public var activeCookingSession: CookingSession? = nil
+    @Published public var recipeProgress: [UUID: Int] = [:]
+    private var sessionStepCancellable: AnyCancellable?
     
     public init() {
         let initialFeatured = MockData.scallopsRecipe
@@ -355,10 +357,21 @@ public class RecipeStore: ObservableObject {
         if let existing = activeCookingSession, existing.recipe.id == recipe.id {
             if let idx = initialStepIndex {
                 existing.currentStepIndex = idx
+                recipeProgress[recipe.id] = idx
             }
             return existing
         }
-        let session = CookingSession(recipe: recipe, initialStepIndex: initialStepIndex)
+        
+        let resumeIndex = initialStepIndex ?? recipeProgress[recipe.id] ?? 0
+        let session = CookingSession(recipe: recipe, initialStepIndex: resumeIndex)
+        recipeProgress[recipe.id] = resumeIndex
+        
+        sessionStepCancellable = session.$currentStepIndex
+            .dropFirst()
+            .sink { [weak self] newIndex in
+                self?.recipeProgress[recipe.id] = newIndex
+            }
+        
         self.activeCookingSession = session
         return session
     }
@@ -366,5 +379,7 @@ public class RecipeStore: ObservableObject {
     public func endCookingSession() {
         activeCookingSession?.pauseTimer()
         activeCookingSession = nil
+        sessionStepCancellable?.cancel()
+        sessionStepCancellable = nil
     }
 }

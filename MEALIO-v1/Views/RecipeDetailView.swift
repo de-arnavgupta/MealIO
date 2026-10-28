@@ -370,13 +370,16 @@ public struct RecipeDetailView: View {
             }
             .buttonStyle(.plain)
             
+            let hasProgress = (store.recipeProgress[recipe.id] ?? 0) > 0 || (store.activeCookingSession?.recipe.id == recipe.id && (store.activeCookingSession?.currentStepIndex ?? 0) > 0)
+            
             Button(action: {
+                vm.cookingInitialStep = nil
                 vm.showingHandsFreeCooking = true
             }) {
                 HStack(spacing: 10) {
-                    Text("Let's get cooking")
+                    Text(hasProgress ? "Resume cooking" : "Let's get cooking")
                         .font(.system(size: 16, weight: .semibold))
-                    Image(systemName: "fork.knife")
+                    Image(systemName: hasProgress ? "play.fill" : "fork.knife")
                         .font(.system(size: 15, weight: .semibold))
                 }
                 .foregroundColor(.white)
@@ -627,14 +630,17 @@ public struct RecipeDetailView: View {
     @ViewBuilder
     private var stickyBottomBar: some View {
         if vm.selectedTab != .overview {
+            let hasProgress = (store.recipeProgress[recipe.id] ?? 0) > 0 || (store.activeCookingSession?.recipe.id == recipe.id && (store.activeCookingSession?.currentStepIndex ?? 0) > 0)
+            
             VStack(spacing: 6) {
                 Button(action: {
+                    vm.cookingInitialStep = nil
                     vm.showingHandsFreeCooking = true
                 }) {
                     HStack(spacing: 8) {
-                        Text("Start hands-free cooking")
+                        Text(hasProgress ? "Resume hands-free cooking" : "Start hands-free cooking")
                             .font(.system(size: 16, weight: .semibold))
-                        Image(systemName: "mic.fill")
+                        Image(systemName: hasProgress ? "play.fill" : "mic.fill")
                             .font(.system(size: 14))
                     }
                     .foregroundColor(.white)

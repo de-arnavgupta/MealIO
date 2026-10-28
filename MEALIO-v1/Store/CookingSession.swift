@@ -4,9 +4,9 @@ import Combine
 public class CookingSession: ObservableObject {
     public let recipe: Recipe
     
-    @Published public var currentStepIndex: Int = 3 // 0-indexed, so step 4 is index 3
-    @Published public var timeRemaining: Int = 72 // Initialized to 01:12 matching screenshot!
-    @Published public var totalTimerDuration: Int = 90
+    @Published public var currentStepIndex: Int = 0
+    @Published public var timeRemaining: Int = 0
+    @Published public var totalTimerDuration: Int = 0
     @Published public var isTimerRunning: Bool = false
     @Published public var isHandsFreeActive: Bool = true
     @Published public var isVoiceListening: Bool = true
@@ -20,8 +20,6 @@ public class CookingSession: ObservableObject {
         let defaultIndex: Int
         if let idx = initialStepIndex {
             defaultIndex = max(0, min(idx, recipe.steps.count - 1))
-        } else if let timerIdx = recipe.steps.firstIndex(where: { $0.hasTimer }) {
-            defaultIndex = timerIdx
         } else {
             defaultIndex = 0
         }
@@ -30,11 +28,10 @@ public class CookingSession: ObservableObject {
             let step = recipe.steps[defaultIndex]
             if step.hasTimer {
                 self.totalTimerDuration = step.timerDurationSeconds
-                if step.timerDurationSeconds == 90 {
-                    self.timeRemaining = 72 // Matches exact 01:12 Figma screen
-                } else {
-                    self.timeRemaining = step.timerDurationSeconds
-                }
+                self.timeRemaining = step.timerDurationSeconds
+            } else {
+                self.totalTimerDuration = 0
+                self.timeRemaining = 0
             }
         }
         setupAudioSimulation()

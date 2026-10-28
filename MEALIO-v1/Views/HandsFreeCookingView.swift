@@ -303,6 +303,7 @@ public struct HandsFreeCookingView: View {
                                 .buttonStyle(.plain)
                             } else {
                                 Button(action: {
+                                    session.currentStepIndex = 0
                                     dismiss()
                                 }) {
                                     HStack(spacing: 8) {
