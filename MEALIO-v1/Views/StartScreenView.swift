@@ -91,16 +91,10 @@ public struct StartScreenView: View {
                 .scaleEffect(chefScale)
                 .opacity(chefOpacity)
                 
-                // App Brand Title + Dot
-                HStack(spacing: 0) {
-                    Text("Meal")
-                        .foregroundColor(MealioColors.textPrimary)
-                    Text("·")
-                        .foregroundColor(MealioColors.terracotta)
-                    Text("io")
-                        .foregroundColor(MealioColors.textPrimary)
-                }
-                .font(MealioFont.brandLogo(size: 38))
+                // App Brand Title
+                Text("mealio")
+                    .font(MealioFont.brandLogo(size: 38))
+                    .foregroundColor(MealioColors.textPrimary)
                 .padding(.top, 24)
                 .opacity(textOpacity)
                 .offset(y: textOffset)
